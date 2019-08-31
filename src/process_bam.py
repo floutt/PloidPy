@@ -1,7 +1,7 @@
 import numpy as np
 import pysam
 import os
-
+from scipy.stats import poisson
 
 def get_biallelic_coverage(bamfile, bed = False, outfile):
     bam = pysam.AlignmentFile(bamfile, "rb")
@@ -37,3 +37,10 @@ def get_biallelic_coverage(bamfile, bed = False, outfile):
                                   np.sum(nuc_cov, axis=0)]).T, fmt='%d')
         svf.close()
     f.close()
+
+
+# denoises read count file generated from get_biallelic_coverage by removing
+# outliers that do not fit the poisson model
+def denoise_reads(readfile, p = 0.001):
+    reads = np.loadtxt(readfile)
+    return reads[poisson.pmf(reads[:, 1], np.mean(reads[:, 1])) > p, :]
