@@ -33,8 +33,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
 
         # get and save minimum and total allele count numbers
         svf = open(outfile, 'ab')
-        np.savetxt(svf, np.array([np.min(nuc_cov, axis = 0),
-                                  np.sum(nuc_cov, axis=0)]).T, fmt='%d')
+        np.savetxt(svf, np.array([np.min(nuc_cov, axis = 1),
+                                  np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
         svf.close()
     f.close()
 
