@@ -3,7 +3,7 @@ import pysam
 import os
 from scipy.stats import poisson
 
-def get_biallelic_coverage(bamfile, bed = False, outfile):
+def get_biallelic_coverage(bamfile, outfile, bed = False):
     bam = pysam.AlignmentFile(bamfile, "rb")
     f = None
     if bed:
