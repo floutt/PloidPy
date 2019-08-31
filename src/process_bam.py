@@ -21,10 +21,10 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
         bedrow = line.split()
         nuc_cov = None
         if bed:
-            nuc_cov = np.arrray(bam.count_coverage(line[0], int(line[1]),
+            nuc_cov = np.array(bam.count_coverage(line[0], int(line[1]),
                                                    int(line[2])))
         else:
-            nuc_cov = np.arrray(bam.count_coverage(line[0]))
+            nuc_cov = np.array(bam.count_coverage(line[0]))
 
         # only get biallelic site
         nuc_cov = nuc_cov[:, np.sum((nuc_cov == 0) == False, axis = 0) == 2].T
