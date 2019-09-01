@@ -2,6 +2,7 @@ import numpy as np
 import pysam
 import os
 from scipy.stats import poisson
+from scipy.cluster.vq import vq, kmeans
 
 def get_biallelic_coverage(bamfile, outfile, bed = False):
     bam = pysam.AlignmentFile(bamfile, "rb")
@@ -44,6 +45,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
 # minor allele reads which often plague the data
 def denoise_reads(readfile, iter = 3):
     reads = np.loadtxt(readfile)
+    oldcent = None
     for i in range(iter):
         km = kmeans(reads, 2)
         centroids = km[0]
