@@ -40,7 +40,13 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
 
 
 # denoises read count file generated from get_biallelic_coverage by removing
-# outliers that do not fit the poisson model
-def denoise_reads(readfile, p = 0.001):
+# clustering the data into two parts. One which should capture the low coverage
+# minor allele reads which often plague the data
+def denoise_reads(readfile, iter = 3):
     reads = np.loadtxt(readfile)
-    return reads[poisson.pmf(reads[:, 1], np.mean(reads[:, 1])) > p, :]
+    for i in range(iter):
+        km = kmeans(reads, 2)
+        centroids = km[0]
+        degen = np.argmin(centroids[:,0])
+        reads = reads[(vq(reads, centroids)[0] == degen) == False]
+    return reads
