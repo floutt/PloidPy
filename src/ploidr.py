@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import process_bam as pb
 import ploidy_model as pm
+import plot_read_data as plot
 
 
 if __name__ == '__main__':
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     denoise = subparsers.add_parser("denoise")
     denoise.add_argument("--count_file", required = True)
     denoise.add_argument("--out", required = True)
-    denoise.add_argument("iter", type = int, default = 3, required = True)
+    denoise.add_argument("--iter", type = int, default = 3, required = True)
 
     histo = subparsers.add_parser("histo")
     histo.add_argument("--count_file", required = True)
@@ -29,22 +30,26 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.subparser == 'process_bam':
-        subargs = process_bam.parse_args()
-        print("Now processing BAM file %s..." % subargs.bam)
-        if subargs.bed:
-            print("\tprocessing subset found in %s" % subargs.bed)
-        pb.get_biallelic_coverage(subargs.bam, subargs.out, subargs.bed)
+        print("Now processing BAM file %s..." % args.bam)
+        if args.bed:
+            print("\tprocessing subset found in %s" % args.bed)
+        pb.get_biallelic_coverage(args.bam, args.out, args.bed)
         print("Success!")
     elif args.subparser == 'denoise':
-        subargs = denoise.parse_args()
-        print("Denoising count file %s..." % subargs.count_file)
-        np.savetxt(subargs.out, pb.denoise_reads(subargs.count_file,
-                                                 subargs.iter),
+        print("Denoising count file %s..." % args.count_file)
+        np.savetxt(args.out, pb.denoise_reads(args.count_file,
+                                                 args.iter),
                    fmt='%d')
-        print("Filtered data sucessfully saved in %s" % subargs.out)
+        print("Filtered data sucessfully saved in %s" % args.out)
     elif args.subparser == 'histo':
-        # FILL IN TODO
-        None
+        cnts = np.loadtxt(args.count_file)
+        plot.plot_read_hexbin(cnts, args.out + ".hexbin.pdf")
+        plot.plot_read_histogram(cnts, args.out + ".histo.pdf")
+        print("Files saved in %s.hexbin.pdf and %s.histo.pdf!" % (args.count_file, args.count_file))
     elif args.subparser == 'assess':
-       # FILL IN TODO
-       None
+        cnts = np.loadtxt(args.count_file)
+        lam = np.mean(cnts[:,1])
+        pld = np.array(args.ploidies)
+        aicllh = pm.get_Log_Likelihood_AIC(cnts[:,0], pld, lam)
+        print(aicllh[0])
+        print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))

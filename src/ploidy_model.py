@@ -21,7 +21,7 @@ def weighted_Ploidy_Log_Likelihood(lh):
 def get_Log_Likelihood_AIC(x, models, lam):
     w_lh = np.zeros(np.shape(models))
     k = np.floor(models / 2) + 2
-    for i in range(models):
+    for i in range(len(models)):
         w_lh[i] = weighted_Ploidy_Log_Likelihood(
             ploidy_Likelihood(x, models[i], lam))
     return (w_lh, (2 * k) - (2 * w_lh))
