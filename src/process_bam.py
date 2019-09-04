@@ -12,7 +12,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
         f = open(bed)
     else:
         # temporary storage file for contig names
-        temp = "temp.file"
+        temp = "temp." + str(np.random.randint(100))
         # command to store data in temporary file
         bashcmd = ("samtools view -H %s | grep SQ | cut -f2 | cut -c 4- > " +
                    temp)
@@ -39,7 +39,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
                                   np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
         svf.close()
     f.close()
-
+    # remove temporary file
+    os.system("rm %s" % temp)
 
 # denoises read count file generated from get_biallelic_coverage by removing
 # clustering the data into two parts. One which should capture the low coverage
