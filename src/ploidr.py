@@ -48,8 +48,10 @@ if __name__ == '__main__':
         print("Files saved in %s.hexbin.pdf and %s.histo.pdf!" % (args.count_file, args.count_file))
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
-        lam = np.mean(cnts[:,1])
+        uniq = np.unique(cnts[:,1], return_counts = True)
+        dens = uniq[1] / np.sum(uniq[1])
+        n_val = uniq[0]
         pld = np.array(args.ploidies)
-        aicllh = pm.get_Log_Likelihood_AIC(cnts[:,0], pld, lam)
+        aicllh = pm.get_Log_Likelihood_AIC(cnts[:,0], pld, dens, n_val)
         print(aicllh[0])
         print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))
