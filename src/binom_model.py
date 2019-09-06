@@ -6,7 +6,7 @@ from scipy.stats import binom
 # adjust for this we normalize the data based off of this. The maximum possible
 # value in our case will be (0.5 * x)
 def truncated_binom_pmf(x, n, p):
-    return binom.pmf(x, n, p) / binom.cdf(n/2, n, p)
+    return binom.pmf(x, n, p) / (binom.cdf(n/2, n, p) - binom.pmf(0, n, p))
 
 
 # calculates the likelihood of each value in x based off of
