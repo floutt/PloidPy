@@ -4,9 +4,12 @@ from scipy.stats import binom
 # since we are using calculations based off of the minor allele frequency, we
 # have to use a truncated binomial instead of the traditional one. In order to
 # adjust for this we normalize the data based off of this. The maximum possible
-# value in our case will be (0.5 * x)
+# value in our case will be (0.5 * x) and the minimum possible value is 1
 def truncated_binom_pmf(x, n, p):
-    return binom.pmf(x, n, p) / binom.cdf(n/2, n, p)
+    if n < 1:
+        return 0
+    else:
+        return binom.pmf(x, n, p) / (binom.cdf(n/2, n, p) - binom.pmf(0, n, p))
 
 
 # calculates the likelihood of each value in x based off of
