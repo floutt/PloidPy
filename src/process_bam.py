@@ -1,7 +1,7 @@
 import numpy as np
 import pysam
 import os
-
+from scipy.stats import
 
 def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     bam = pysam.AlignmentFile(bamfile, "rb")
@@ -13,8 +13,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
         temp = "temp." + str(np.random.randint(100))
         # command to store data in temporary file
         bashcmd = ("samtools view -H %s | grep SQ | cut -f2 | cut -c 4- > " +
-                   temp)
-        os.system(bashcmd % bamfile)
+
         f = open(temp)
 
     # counts for the total number of sites with a certain amount of unique
@@ -45,7 +44,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
         svf = open(outfile, 'ab')
         np.savetxt(svf, np.array([np.min(nuc_cov, axis = 1),
                                   np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
-        svf.close(i)
+        svf.close()
     for i in range(4):
         print("%s %s-allele sites detected" % (count[i], i + 1))
     f.close()
@@ -54,13 +53,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
 
 
 # denoises read count file generated from get_biallelic_coverage by removing
-# clustering the data into two parts. One which should capture the low coverage
-# minor allele reads which often plague the data
+# removing the putative false positive biallelic sites. This is done by
+# comparing the data to a given binomial error model. A normal distribution is
+# used to represent the "true" data - not because it is necessarily
 def denoise_reads(readfile, iter = 3):
-    reads = np.loadtxt(readfile)
-    for i in range(iter):
-        km = kmeans(reads, 2)
-        centroids = km[0]
-        degen = np.argmin(centroids[:,0])
-        reads = reads[(vq(reads, centroids)[0] == degen) == False]
-    return reads
+    def
