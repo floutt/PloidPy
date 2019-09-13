@@ -1,7 +1,7 @@
 import numpy as np
 import pysam
 import os
-from scipy.stats import
+from scipy.stats import binom
 
 def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     bam = pysam.AlignmentFile(bamfile, "rb")
@@ -13,7 +13,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
         temp = "temp." + str(np.random.randint(100))
         # command to store data in temporary file
         bashcmd = ("samtools view -H %s | grep SQ | cut -f2 | cut -c 4- > " +
-
+                   temp)
+        os.system(bashcmd % bamfile)
         f = open(temp)
 
     # counts for the total number of sites with a certain amount of unique
@@ -46,7 +47,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
                                   np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
         svf.close()
     for i in range(4):
-        print("%s %s-allele sites detected" % (count[i], i + 1))
+        print("%s %s-allele sites detected" % (counts[i], i + 1))
     f.close()
     # remove temporary file
     os.system("rm %s" % temp)
@@ -57,4 +58,4 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
 def denoise_reads(readfile, iter = 3):
-    def
+    None
