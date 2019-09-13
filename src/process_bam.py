@@ -1,11 +1,9 @@
 import numpy as np
 import pysam
 import os
-from scipy.stats import poisson
-from scipy.cluster.vq import vq, kmeans
 
 
-def get_biallelic_coverage(bamfile, outfile, bed = False):
+def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     bam = pysam.AlignmentFile(bamfile, "rb")
     f = None
     if bed:
@@ -19,17 +17,27 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
         os.system(bashcmd % bamfile)
         f = open(temp)
 
+    # counts for the total number of sites with a certain amount of unique
+    # nucleotide variants
+    counts = np.array([0, 0, 0, 0])
     for line in f:
         br = line.split()
         nuc_cov = None
         if bed:
             nuc_cov = np.array(bam.count_coverage(br[0], int(br[1]),
-                                                  int(br[2])))
+                                                  int(br[2]),
+                                                  quality_threshold = quality))
         else:
-            nuc_cov = np.array(bam.count_coverage(br[0]))
+            nuc_cov = np.array(bam.count_coverage(br[0],
+                                                  quality_threshold = quality))
+
+        # categorize sites by unique nucleotide count
+        pop_sites = np.sum((nuc_cov == 0) == False, axis = 0)
+        site_counts = np.unique(pop_sites, return_counts = True)
+        counts += site_counts[1][np.where(site_counts[0] > 0)[0]]
 
         # only get biallelic site
-        nuc_cov = nuc_cov[:, np.sum((nuc_cov == 0) == False, axis = 0) == 2].T
+        nuc_cov = nuc_cov[:, pop_sites == 2].T
         nuc_cov = nuc_cov[(nuc_cov == 0) == False]
         nuc_cov = np.reshape(nuc_cov, (2, int(len(nuc_cov) / 2))).T
 
@@ -37,10 +45,13 @@ def get_biallelic_coverage(bamfile, outfile, bed = False):
         svf = open(outfile, 'ab')
         np.savetxt(svf, np.array([np.min(nuc_cov, axis = 1),
                                   np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
-        svf.close()
+        svf.close(i)
+    for i in range(4):
+        print("%s %s-allele sites detected" % (count[i], i + 1))
     f.close()
     # remove temporary file
     os.system("rm %s" % temp)
+
 
 # denoises read count file generated from get_biallelic_coverage by removing
 # clustering the data into two parts. One which should capture the low coverage
