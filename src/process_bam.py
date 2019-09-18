@@ -1,7 +1,15 @@
 import numpy as np
 import pysam
 import os
-from scipy.stats import binom
+
+
+# in the case that a value produces a probability of 0 (or a probability lower
+# than what can be represented with floating-point numbers, we replace it with
+# the lowest representable number for a 64bit operating system. We do this in
+# order to prevent any complications arising from NaN values (i.e. log(0) is
+# replaced with log(EPS)
+EPS = np.finfo(np.float64).tiny
+
 
 def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     bam = pysam.AlignmentFile(bamfile, "rb")
@@ -20,6 +28,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     # counts for the total number of sites with a certain amount of unique
     # nucleotide variants
     counts = np.array([0, 0, 0, 0])
+
+    # variables used to calculate the mean coverage of the data AS A WHOLE
     for line in f:
         br = line.split()
         nuc_cov = None
@@ -57,5 +67,31 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
 # removing the putative false positive biallelic sites. This is done by
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
-def denoise_reads(readfile, iter = 3):
-    None
+# representative
+def denoise_reads(readfile, total_mean, p_err):
+    # calculates the log likelihood value of an array of likelihood values
+    def log_lh(mat):
+        return np.sum(np.log(mat))
+
+    x = np.loadtxt(readfile)
+    error_model = sts.binom(total_mean, p_err)
+    em_lh = error_model.pmf(x)
+    em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
+    # set prior values
+    nm_mean = np.mean(x)
+    nm_std = np.std(x)
+    nm_lh_old = np.ones_like(x) * EPS  # initial old value assumes 0 probability
+    nm_lh = stats.norm.pdf(x, nm_mean, nm_std)
+    nm_lh[nm_lh <  EPS] = EPS  # replace 0s with EPS
+    posterior = None
+
+    # run till it converges upon a maximum likelihood value
+    while log_lh(nm_lh_old) < log_lh(nm_lh):
+        posterior = nm_lh / (lh_pm + em_lh)
+        nm_mean = np.dot(posterior, x) / np.sum(posterior)
+        nm_std = np.sqrt(np.dot(posterior, (x - newmean) ** 2) / np.sum(posterior))
+        nm_lh_old = nm_lh
+        nm_lh = stats.norm.pdf(x, nm_mean, nm_std)
+
+    print(newmean, newvar)
+    return posterior, nm_lh
