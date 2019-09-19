@@ -49,7 +49,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
         # only get biallelic site
         nuc_cov = nuc_cov[:, pop_sites == 2].T
         nuc_cov = nuc_cov[(nuc_cov == 0) == False]
-        nuc_cov = np.reshape(nuc_cov, (2, int(len(nuc_cov) / 2))).T
+        nuc_cov = np.reshape(nuc_cov, (int(len(nuc_cov) / 2), 2)).T
 
         # get and save minimum and total allele count numbers
         svf = open(outfile, 'ab')
