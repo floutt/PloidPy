@@ -18,7 +18,7 @@ def truncated_binom_pmf(x, n, p):
 # underlying negative binomial distribution distribution for reads and a
 # conditional truncated binomial distribution for the minor allele
 def compound_nb_binom_pmf(x, p, r, p_nb):
-    lh_nb = nbinom(x[:,1], r, p_nb)
+    lh_nb = nbinom.pmf(x[:,1], r, p_nb)
     lh_b = np.ones_like(x[:,0])
     for i in range(len(lh_b)):
         lh_b[i] = lh_nb[i] * truncated_binom_pmf(x[i,0], x[i,1], p)
