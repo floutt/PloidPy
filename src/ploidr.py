@@ -3,6 +3,7 @@ import numpy as np
 import process_bam as pb
 import ploidy_model as pm
 import plot_read_data as plot
+import nbinom as nb
 
 
 if __name__ == '__main__':
@@ -49,11 +50,9 @@ if __name__ == '__main__':
         print("Files saved in %s.hexbin.pdf and %s.histo.pdf!" % (args.count_file, args.count_file))
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
-        uniq = np.unique(cnts[:,1], return_counts = True)
-        dens = uniq[1] / np.sum(uniq[1])
-        n_val = uniq[0]
+        r, p_nb = nb.fit_nbinom(x[:,1])
         pld = np.array(args.ploidies)
-        aicllh = pm.get_Log_Likelihood_AIC(cnts[:,0], pld, dens, n_val)
+        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb)
         print(aicllh[0])
         print(aicllh[1])
         print(pld)
