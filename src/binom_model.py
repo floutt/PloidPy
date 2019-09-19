@@ -1,5 +1,7 @@
 import numpy as np
-from scipy.stats import binom
+import nbinom as nb
+from scipy.stats import binom, nbinom
+
 
 # since we are using calculations based off of the minor allele frequency, we
 # have to use a truncated binomial instead of the traditional one. In order to
@@ -12,20 +14,23 @@ def truncated_binom_pmf(x, n, p):
         return binom.pmf(x, n, p) / (binom.cdf(n/2, n, p) - binom.pmf(0, n, p))
 
 
-# calculates the likelihood of each value in x based off of
-def binom_mix_pmf(x, p, dens, n_val):
-    lh = np.zeros_like(x)
-    for i in range(len(n_val)):
-        lh = lh + (dens[i] * truncated_binom_pmf(x, n_val[i], p))
-    return lh
+# calculates the likelihood of each value in the joint distribution x given an
+# underlying negative binomial distribution distribution for reads and a
+# conditional truncated binomial distribution for the minor allele
+def compound_nb_binom_pmf(x, p, r, p_nb):
+    lh_nb = nbinom(x[:,1], r, p_nb)
+    lh_b = np.ones_like(x[:,0])
+    for i in range(len(lh_b)):
+        lh_b[i] = lh_nb[i] * truncated_binom_pmf(x[i,0], x[i,1], p)
+    return lh_nb * lh_b
 
 
 # calculates a matrix of the binom_mix for a vector of p values
-def get_Likelihood(x, p, dens, n_val):
+def get_Likelihood(x, p, r, p_nb):
     # likelihood of p
     lh = np.ones((len(p), len(x)))
     for i in range(len(p)):
-        lh[i] = binom_mix_pmf(x, p[i], dens, n_val)
+        lh[i] = compound_nb_binom_pmf(x, p[i], r, p_nb)
     return lh
 
 
