@@ -13,7 +13,7 @@ if __name__ == '__main__':
     process_bam.add_argument("--bam", required = True)
     process_bam.add_argument("--out", required = True)
     process_bam.add_argument("--bed", default = False)
-    process_bam.add_argument("--quality", default = 15, required = True)
+    process_bam.add_argument("--quality", default = 15, required = True, type = int)
 
     denoise = subparsers.add_parser("denoise")
     denoise.add_argument("--count_file", required = True)
