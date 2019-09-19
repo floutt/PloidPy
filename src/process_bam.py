@@ -76,7 +76,8 @@ def denoise_reads(readfile, total_mean, p_err):
     def log_lh(mat):
         return np.sum(np.log(mat))
 
-    x = np.loadtxt(readfile)[:,0]
+    reads = np.loadtxt(readfile)
+    x = reads[:,0]
     error_model = stats.binom(total_mean, p_err)
     em_lh = error_model.pmf(x)
     em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
@@ -103,4 +104,4 @@ def denoise_reads(readfile, total_mean, p_err):
 
     print("Performed %s iterations" % iters)
     print(nm_mean, nm_std)
-    return posterior
+    return posterior, reads[posterior > 0.5]
