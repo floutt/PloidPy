@@ -13,6 +13,7 @@ if __name__ == '__main__':
     process_bam.add_argument("--bam", required = True)
     process_bam.add_argument("--out", required = True)
     process_bam.add_argument("--bed", default = False)
+    process_bam.add_argument("--quality", default = 15, required = True)
 
     denoise = subparsers.add_parser("denoise")
     denoise.add_argument("--count_file", required = True)
@@ -33,7 +34,7 @@ if __name__ == '__main__':
         print("Now processing BAM file %s..." % args.bam)
         if args.bed:
             print("\tprocessing subset found in %s" % args.bed)
-        pb.get_biallelic_coverage(args.bam, args.out, args.bed)
+        pb.get_biallelic_coverage(args.bam, args.out, args.bed, args.quality)
         print("Success!")
     elif args.subparser == 'denoise':
         print("Denoising count file %s..." % args.count_file)
@@ -54,4 +55,6 @@ if __name__ == '__main__':
         pld = np.array(args.ploidies)
         aicllh = pm.get_Log_Likelihood_AIC(cnts[:,0], pld, dens, n_val)
         print(aicllh[0])
+        print(aicllh[1])
+        print(pld)
         print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))
