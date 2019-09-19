@@ -1,6 +1,7 @@
 import numpy as np
 import pysam
 import os
+import scipy.stats as stats
 
 
 # in the case that a value produces a probability of 0 (or a probability lower
@@ -74,7 +75,7 @@ def denoise_reads(readfile, total_mean, p_err):
         return np.sum(np.log(mat))
 
     x = np.loadtxt(readfile)[:,0]
-    error_model = sts.binom(total_mean, p_err)
+    error_model = stats.binom(total_mean, p_err)
     em_lh = error_model.pmf(x)
     em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
     # set prior values
