@@ -2,6 +2,9 @@ import numpy as np
 import binom_model as bm
 
 
+EPS = np.finfo(np.float64).tiny
+
+
 # calculates the likelihood values for each heterozygous state for the x matrix
 # for the n ploidy model. This model does NOT calculate the WEIGHTED
 # likelihood, just the likelihood of each value for each model.
@@ -11,9 +14,11 @@ def ploidy_Likelihood(x, n, r, p_nb):
 
 
 def weighted_Ploidy_Log_Likelihood(lh):
-    w = bm.get_Weights(lh)
-    a = np.multiply(lh, w[:, np.newaxis])
-    return np.sum(np.log(np.sum(np.multiply(lh, w[:, np.newaxis]), axis = 0)))
+    lh0 = lh.copy()
+    lh0[lh0 == 0] = EPS
+    w = bm.get_Weights(lh0)
+    a = np.multiply(lh0, w[:, np.newaxis])
+    return np.sum(np.log(np.sum(np.multiply(lh0, w[:, np.newaxis]), axis = 0)))
 
 
 # Calculates the  Akaike Information Criterion (AIC) value of x when given a

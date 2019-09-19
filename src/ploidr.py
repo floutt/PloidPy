@@ -50,7 +50,7 @@ if __name__ == '__main__':
         print("Files saved in %s.hexbin.pdf and %s.histo.pdf!" % (args.count_file, args.count_file))
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
-        r, p_nb = nb.fit_nbinom(x[:,1])
+        r, p_nb = nb.fit_nbinom(cnts[:,1])
         pld = np.array(args.ploidies)
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb)
         print(aicllh[0])
