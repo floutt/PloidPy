@@ -71,7 +71,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
 # representative
-def denoise_reads(readfile, total_mean, p_err):
+def denoise_reads(readfile, total_mean, p_err = 10 ** (-15/10)):
     # calculates the log likelihood value of an array of likelihood values
     def log_lh(mat):
         return np.sum(np.log(mat))
