@@ -45,7 +45,9 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
         # categorize sites by unique nucleotide count
         pop_sites = np.sum((nuc_cov == 0) == False, axis = 0)
         site_counts = np.unique(pop_sites, return_counts = True)
-        counts += site_counts[1][np.where(site_counts[0] > 0)[0]]
+        for i, count in enumerate(site_count[0]):
+            if count != 0:
+                counts[count-1] += site_counts[1][i]
 
         # only get biallelic site
         nuc_cov = nuc_cov[:, pop_sites == 2].T
