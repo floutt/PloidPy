@@ -53,8 +53,8 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
 
         # get and save minimum and total allele count numbers
         svf = open(outfile, 'ab')
-        np.savetxt(svf, np.array([np.min(nuc_cov, axis = 1),
-                                  np.sum(nuc_cov, axis = 1)]).T, fmt='%d')
+        np.savetxt(svf, np.array([np.min(nuc_cov, axis = 0),
+                                  np.sum(nuc_cov, axis = 0)]).T, fmt='%d')
         svf.close()
     for i in range(4):
         print("%s %s-allele sites detected" % (counts[i], i + 1))
@@ -73,25 +73,31 @@ def denoise_reads(readfile, total_mean, p_err):
     def log_lh(mat):
         return np.sum(np.log(mat))
 
-    x = np.loadtxt(readfile)
+    x = np.loadtxt(readfile)[:,0]
     error_model = sts.binom(total_mean, p_err)
     em_lh = error_model.pmf(x)
     em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
     # set prior values
-    nm_mean = np.mean(x)
-    nm_std = np.std(x)
+    nm_mean = np.mean(np.max(x))
+    nm_std = 1
     nm_lh_old = np.ones_like(x) * EPS  # initial old value assumes 0 probability
     nm_lh = stats.norm.pdf(x, nm_mean, nm_std)
     nm_lh[nm_lh <  EPS] = EPS  # replace 0s with EPS
     posterior = None
 
+    iters = 0
     # run till it converges upon a maximum likelihood value
     while log_lh(nm_lh_old) < log_lh(nm_lh):
-        posterior = nm_lh / (lh_pm + em_lh)
+        print(log_lh(nm_lh))
+        iters += 1
+        posterior = nm_lh / (nm_lh + em_lh)
         nm_mean = np.dot(posterior, x) / np.sum(posterior)
-        nm_std = np.sqrt(np.dot(posterior, (x - newmean) ** 2) / np.sum(posterior))
+        nm_std = np.sqrt(np.dot(posterior, (x - nm_mean) ** 2) / np.sum(posterior))
         nm_lh_old = nm_lh
         nm_lh = stats.norm.pdf(x, nm_mean, nm_std)
+        nm_lh[nm_lh <  EPS] = EPS  # replace 0s with EPS
+    print(log_lh(nm_lh))
 
-    print(newmean, newvar)
-    return posterior, nm_lh
+    print("Performed %s iterations" % iters)
+    print(nm_mean, nm_std)
+    return posterior
