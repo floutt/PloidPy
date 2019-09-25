@@ -1,27 +1,17 @@
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def plot_read_hexbin(arr, savefile):
-    plt.hexbin(arr[:,0], arr[:, 1])
-    plt.colorbar()
-    plt.xlabel("Minor Allele Coverage")
-    plt.ylabel("Total Coverage")
-    plt.savefig(savefile)
-
-
-def plot_read_histogram(arr, savefile, bins = 30):
-    weights = np.ones_like(arr[:,0])/ float(len(arr[:,0]))
-    plt.subplot(211)
-    plt.hist(arr[:,0], bins = bins, weights = weights)
-    plt.ylabel("Frequency")
-    plt.xlabel("Coverage")
-    plt.title("Minor Allele Coverage")
-    plt.subplot(212)
-    plt.hist(arr[:,1], bins = bins, weights = weights)
-    plt.ylabel("Frequency")
-    plt.xlabel("Coverage")
-    plt.title("Total Coverage")
+def plot_joint_dist(a, savefile, max_cutoff = 0.95):
+    uniq = np.unique(a[:,1], return_counts = True)
+    sns.set_context("talk")
+    cumdens = np.cumsum(uniq[1] / np.sum(uniq[1]))
+    maxv = uniq[0][np.where(cumdens >= max_cutoff)[0][0]]
+    a0 = a[a[:,1] < maxv]
+    (sns.jointplot(a0[:,0], a0[:,1], kind = "hex", color="blue")
+     .set_axis_labels("Minor Allele Coverage", "Total Allele Coverage"))
+    plt.tight_layout()
     plt.savefig(savefile)
