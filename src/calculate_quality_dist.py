@@ -49,9 +49,12 @@ if __name__ == "__main__":
         pufbuf = open(args.pileup)
     elif args.bam:
         os.system("mkdir -p tmp")
-        os.system("samtools mpileup -Q %s -q 0 -A %s" % (args.quality, args.bam))
+        os.system("samtools mpileup -Q %s -q 0 -A %s > %s" % (args.quality, args.bam, tmp))
         pufbuf = open(tmp)
     else:
         pufbuf = sys.stdin
 
     avg_quality(pufbuf, outbuf)
+
+    if args.bam:
+        os.system("rm %s" % tmp)
