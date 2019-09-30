@@ -66,19 +66,33 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
     os.system("rm %s" % temp)
 
 
+def errfile_to_dict(filename):
+    f = open(filename)
+    d = {}
+    for line in f:
+        l = line.split("\t")
+        d[int(l[0])] = float(l[1])
+    return d
+
+
 # denoises read count file generated from get_biallelic_coverage by removing
 # removing the putative false positive biallelic sites. This is done by
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
 # representative
-def denoise_reads(readfile, total_mean, p_err = 10 ** (-15/10)):
+def denoise_reads(readfile, errfile):
     # calculates the log likelihood value of an array of likelihood values
     def log_lh(mat):
         return np.sum(np.log(mat))
 
     reads = np.loadtxt(readfile)
+    edict = errfile_to_dict(errfile)
+    emat = np.zeros(len(reads))
+    for i in range(len(emat)):
+        emat[i] = edict[reads[i, 1]]
+
     x = reads[:,0]
-    error_model = stats.binom(total_mean, p_err)
+    error_model = stats.binom(reads[:,1], emat)
     em_lh = error_model.pmf(x)
     em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
     # set prior values
@@ -104,4 +118,4 @@ def denoise_reads(readfile, total_mean, p_err = 10 ** (-15/10)):
 
     print("Performed %s iterations" % iters)
     print(nm_mean, nm_std)
-    return posterior, reads[posterior > 0.5]
+    return posterior, reads[posterior == 1]
