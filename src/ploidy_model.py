@@ -14,11 +14,13 @@ def ploidy_Likelihood(x, n, r, p_nb):
 
 
 def weighted_Ploidy_Log_Likelihood(lh):
+    print(lh)
     lh0 = lh.copy()
     lh0[lh0 == 0] = EPS
     w = bm.get_Weights(lh0)
+    print(w)
     a = np.multiply(lh0, w[:, np.newaxis])
-    return np.sum(np.log(np.sum(np.multiply(lh0, w[:, np.newaxis]), axis = 0)))
+    return np.sum(np.log(np.sum(np.multiply(lh0, w[:, np.newaxis]), axis = 1)))
 
 
 # Calculates the  Akaike Information Criterion (AIC) value of x when given a
@@ -26,7 +28,7 @@ def weighted_Ploidy_Log_Likelihood(lh):
 # AIC values
 def get_Log_Likelihood_AIC(x, models, r, p_nb):
     w_lh = np.zeros(np.shape(models))
-    k = np.floor(models / 2) + 2
+    k = (np.floor(models / 2) * 2) + 2
     for i in range(len(models)):
         w_lh[i] = weighted_Ploidy_Log_Likelihood(
             ploidy_Likelihood(x, models[i], r, p_nb))
