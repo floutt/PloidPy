@@ -9,7 +9,7 @@ def avg_quality(bamfile, out, quality):
     denom = {}  # denominator for mean calculation
     bam = pysam.AlignmentFile(bamfile, "rb")
     for pcol in bam.pileup(min_base_quality = quality):
-        qual = 10 ** -(np.array(pcol.get_query_qualities())/10)
+        qual = 10 ** -((np.array(pcol.get_query_qualities())-33)/10)
         cov = len(qual)
         if cov < 2:
             continue
