@@ -23,7 +23,6 @@ def avg_quality(bamfile, out, quality):
     for cov in sorted(nmrtr.keys()):
         out.write("%s\t%s\n" % (cov, nmrtr[cov]/denom[cov]))
 
-    fbuf.close()
     out.close()
 
 
