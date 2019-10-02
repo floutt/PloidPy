@@ -19,7 +19,7 @@ if __name__ == '__main__':
     denoise = subparsers.add_parser("denoise")
     denoise.add_argument("--count_file", required = True)
     denoise.add_argument("--out", required = True)
-    denoise.add_argument("--iter", type = int, default = 3, required = True)
+    denoise.add_argument("--err_file", required = True)
 
     histo = subparsers.add_parser("histo")
     histo.add_argument("--count_file", required = True)
@@ -39,15 +39,13 @@ if __name__ == '__main__':
         print("Success!")
     elif args.subparser == 'denoise':
         print("Denoising count file %s..." % args.count_file)
-        np.savetxt(args.out, pb.denoise_reads(args.count_file,
-                                                 args.iter),
+        np.savetxt(args.out, pb.denoise_reads(args.count_file, args.err_file),
                    fmt='%d')
         print("Filtered data sucessfully saved in %s" % args.out)
     elif args.subparser == 'histo':
         cnts = np.loadtxt(args.count_file)
-        plot.plot_read_hexbin(cnts, args.out + ".hexbin.pdf")
-        plot.plot_read_histogram(cnts, args.out + ".histo.pdf")
-        print("Files saved in %s.hexbin.pdf and %s.histo.pdf!" % (args.count_file, args.count_file))
+        plot.plot_joint_dist(cnts, args.out + ".pdf")
+        print("Files saved in %s.pdf!" % args.out)
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
         r, p_nb = nb.fit_nbinom(cnts[:,1])
