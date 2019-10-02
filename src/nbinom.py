@@ -6,7 +6,7 @@ import statsmodels.discrete.discrete_model as dm
 # fits data onto a negative binomial distribution by approximately maximizing
 # the parameters
 def fit_nbinom(x):
-    params = dm.NegativeBinomial(x, np.ones_like(x)).fit().params
+    params = dm.NegativeBinomial(x, np.ones_like(x)).fit(maxiter=200000).params
     mu = np.exp(params[0])
     alpha = params[1]
     r = alpha ** -1
