@@ -1,6 +1,7 @@
 import argparse
 import sys
 import pysam
+import numpy as np
 
 
 def avg_quality(bamfile, out, quality):
