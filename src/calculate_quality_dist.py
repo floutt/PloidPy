@@ -39,4 +39,4 @@ if __name__ == "__main__":
     else:
         outbuf = sys.stdout
 
-    avg_quality(pufbuf, outbuf, args.quality)
+    avg_quality(args.bam, outbuf, args.quality)
