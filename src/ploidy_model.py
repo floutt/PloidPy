@@ -14,7 +14,6 @@ def ploidy_Likelihood(x, n, r, p_nb):
 
 
 def weighted_Ploidy_Log_Likelihood(lh):
-    print(lh)
     lh0 = lh.copy()
     lh0[lh0 == 0] = EPS
     w = bm.get_Weights(lh0)
