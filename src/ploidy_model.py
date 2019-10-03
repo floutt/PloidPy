@@ -1,5 +1,6 @@
 import numpy as np
 import binom_model as bm
+import mpmath as mp
 
 
 EPS = np.finfo(np.float64).tiny
@@ -12,6 +13,12 @@ def ploidy_Likelihood(x, n, r, p_nb):
     het_p = np.arange(1, np.floor(n/2) + 1) / n
     return bm.get_Likelihood(x, het_p, r, p_nb)
 
+def mixture_Log_Likelihood(llh, w):
+    out = 0
+    for i in range(len(llh)):
+        out += (mp.e ** llh[i]) * w[i]
+    return float(mp.log(out))
+
 
 def weighted_Ploidy_Log_Likelihood(lh):
     lh0 = lh.copy()
@@ -19,7 +26,8 @@ def weighted_Ploidy_Log_Likelihood(lh):
     w = bm.get_Weights(lh0)
     print(w)
     a = np.multiply(lh0, w[:, np.newaxis])
-    return np.sum(np.log(np.sum(np.multiply(lh0, w[:, np.newaxis]), axis = 1)))
+    return mixture_Log_Likelihood(np.sum(np.log(lh0), axis = 1), w)
+
 
 
 # Calculates the  Akaike Information Criterion (AIC) value of x when given a
