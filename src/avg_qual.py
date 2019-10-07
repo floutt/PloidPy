@@ -16,7 +16,7 @@ def avg_quality(bamfile, out, quality):
         nmrtr += sum(qual)
         denom += len(qual)
 
-    out.write("%s\t%s\n" % nmrtr/denom)
+    out.write("%s\n" % nmrtr/denom)
     out.close()
 
 
