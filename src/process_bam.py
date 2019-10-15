@@ -80,24 +80,20 @@ def errfile_to_dict(filename):
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
 # representative
-def denoise_reads(readfile, errfile):
+def denoise_reads(readfile, p_err):
     # calculates the log likelihood value of an array of likelihood values
     def log_lh(mat):
         return np.sum(np.log(mat))
 
     reads = np.loadtxt(readfile)
-    edict = errfile_to_dict(errfile)
-    emat = np.zeros(len(reads))
-    for i in range(len(emat)):
-        emat[i] = edict[reads[i, 1]]
 
     x = reads[:,0]
-    error_model = stats.binom(reads[:,1], emat)
+    error_model = stats.binom(np.mean(reads[:,1]), p_err)
     em_lh = error_model.pmf(x)
     em_lh[em_lh < EPS] = EPS  # replace 0s with EPS
     # set prior values
-    nm_mean = np.mean(np.max(x))
-    nm_std = 1
+    nm_mean = np.mean(x[np.random.randint(len(x), size = 100)])
+    nm_std = np.std(x[np.random.randint(len(x), size = 100)])
     nm_lh_old = np.ones_like(x) * EPS  # initial old value assumes 0 probability
     nm_lh = stats.norm.pdf(x, nm_mean, nm_std)
     nm_lh[nm_lh <  EPS] = EPS  # replace 0s with EPS

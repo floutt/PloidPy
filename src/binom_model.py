@@ -8,10 +8,7 @@ from scipy.stats import binom, nbinom
 # adjust for this we normalize the data based off of this. The maximum possible
 # value in our case will be (0.5 * x) and the minimum possible value is 1
 def truncated_binom_pmf(x, n, p):
-    if n < 1:
-        return 0
-    else:
-        return binom.pmf(x, n, p) / (binom.cdf(n/2, n, p) - binom.pmf(0, n, p))
+    return binom.pmf(x, n, p) / (binom.cdf(n/2, n, p) - binom.pmf(0, n, p))
 
 
 # calculates the likelihood of each value in the joint distribution x given an
@@ -19,9 +16,7 @@ def truncated_binom_pmf(x, n, p):
 # conditional truncated binomial distribution for the minor allele
 def compound_nb_binom_pmf(x, p, r, p_nb):
     lh_nb = nbinom.pmf(x[:,1], r, p_nb)
-    lh_b = np.ones_like(x[:,0])
-    for i in range(len(lh_b)):
-        lh_b[i] = lh_nb[i] * truncated_binom_pmf(x[i,0], x[i,1], p)
+    lh_b = truncated_binom_pmf(x[:,0], x[:,1], np.ones_like(x[:,1]) * p)
     return lh_nb * lh_b
 
 
@@ -38,4 +33,4 @@ def get_Likelihood(x, p, r, p_nb):
 # model given a set of fixed distributions. Calculates the weights from
 # likelihood data
 def get_Weights(lh):
-    return np.sum(lh, axis=1) / np.sum(lh)
+    return np.nanmean(lh / np.sum(lh, axis = 0), axis = 1)

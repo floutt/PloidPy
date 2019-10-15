@@ -1,4 +1,5 @@
 import argparse
+import scipy.stats as sts
 import numpy as np
 import process_bam as pb
 import ploidy_model as pm
