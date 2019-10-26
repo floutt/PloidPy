@@ -1,6 +1,6 @@
 import numpy as np
 import nbinom as nb
-from scipy.stats import binom, nbinom
+from scipy.stats import binom, nbinom, randint
 
 
 # since we are using calculations based off of the minor allele frequency, we
@@ -20,12 +20,22 @@ def compound_nb_binom_pmf(x, p, r, p_nb):
     return lh_nb * lh_b
 
 
+# probability mass function for the uniform noise distribution of the data.
+# truncated at 0.5 * x
+def uniform_pmf(x, r, p_nb):
+    lh_nb = nbinom.pmf(x[:,1], r, p_nb)
+    # truncated uniform component
+    lh_unfm = randint.pmf(x[:,0], 1, np.floor(0.5 * x[:,1]))
+    return lh_nb * lh_unfm
+
+
 # calculates a matrix of the binom_mix for a vector of p values
 def get_Likelihood(x, p, r, p_nb):
     # likelihood of p
-    lh = np.ones((len(p), len(x)))
+    lh = np.ones((len(p) + 1, len(x)))
     for i in range(len(p)):
         lh[i] = compound_nb_binom_pmf(x, p[i], r, p_nb)
+    lh[-1] = uniform_pmf(x, r, p_nb)
     return lh
 
 
