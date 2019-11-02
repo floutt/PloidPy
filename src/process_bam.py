@@ -12,67 +12,40 @@ import scipy.stats as stats
 EPS = np.finfo(np.float64).tiny
 
 
-def get_biallelic_coverage(bamfile, outfile, bed = False, quality = 15):
+def get_biallelic_coverage(bamfile, outfile, bed = False, map_quality = 15):
     bam = pysam.AlignmentFile(bamfile, "rb")
-    f = None
+    out = open(outfile, "w+")
+    qual_num = 0
+    qual_dnm = 0
+    nuc_map = {"a":0, "t":1, "g":2, "c":3}
+
+    def pcol_iter(pcol):
+        ATGC = np.zeros(4)
+        bases = pcol.get_query_sequences()
+        for b in bases:
+            if b == '': continue
+            ATGC[nuc_map[b.lower()]] += 1
+        ATGC = ATGC[ATGC > 0]
+        if not len(ATGC) == 2:
+            return
+        out.write("%d %d\n" % (np.min(ATGC), np.sum(ATGC)))
+
     if bed:
         f = open(bed)
+        for line in f:
+            br = line.split()
+            for pcol in bam.pileup(br[0], int(br[1]), int(br[2]), min_base_quality = map_quality):
+                pcol_iter(pcol)
+                qual_num += np.sum(10 ** -(np.array(pcol.get_query_qualities())/10))
+                qual_dnm += pcol.get_num_aligned()
     else:
-        # temporary storage file for contig names
-        temp = "temp." + str(np.random.randint(100))
-        # command to store data in temporary file
-        bashcmd = ("samtools view -H %s | grep SQ | cut -f2 | cut -c 4- > " +
-                   temp)
-        os.system(bashcmd % bamfile)
-        f = open(temp)
-
-    # counts for the total number of sites with a certain amount of unique
-    # nucleotide variants
-    counts = np.array([0, 0, 0, 0])
-
-    # variables used to calculate the mean coverage of the data AS A WHOLE
-    for line in f:
-        br = line.split()
-        nuc_cov = None
-        if bed:
-            nuc_cov = np.array(bam.count_coverage(br[0], int(br[1]),
-                                                  int(br[2]),
-                                                  quality_threshold = quality))
-        else:
-            nuc_cov = np.array(bam.count_coverage(br[0],
-                                                  quality_threshold = quality))
-
-        # categorize sites by unique nucleotide count
-        pop_sites = np.sum((nuc_cov == 0) == False, axis = 0)
-        site_counts = np.unique(pop_sites, return_counts = True)
-        for i, count in enumerate(site_counts[0]):
-            if count != 0:
-                counts[count-1] += site_counts[1][i]
-
-        # only get biallelic site
-        nuc_cov = nuc_cov[:, pop_sites == 2].T
-        nuc_cov = nuc_cov[(nuc_cov == 0) == False]
-        nuc_cov = np.reshape(nuc_cov, (int(len(nuc_cov) / 2), 2)).T
-
-        # get and save minimum and total allele count numbers
-        svf = open(outfile, 'ab')
-        np.savetxt(svf, np.array([np.min(nuc_cov, axis = 0),
-                                  np.sum(nuc_cov, axis = 0)]).T, fmt='%d')
-        svf.close()
-    for i in range(4):
-        print("%s %s-allele sites detected" % (counts[i], i + 1))
-    f.close()
-    # remove temporary file
-    os.system("rm %s" % temp)
-
-
-def errfile_to_dict(filename):
-    f = open(filename)
-    d = {}
-    for line in f:
-        l = line.split("\t")
-        d[int(l[0])] = float(l[1])
-    return d
+        for pcol in bam.pileup(min_base_quality = map_quality):
+            pcol_iter(pcol)
+            qual_num += np.sum(10 ** -(np.array(pcol.get_query_qualities())/10))
+            qual_dnm += pcol.get_num_aligned()
+    print("Base quality error probability:")
+    print(qual_num/qual_dnm)
+    out.close()
 
 
 # denoises read count file generated from get_biallelic_coverage by removing
