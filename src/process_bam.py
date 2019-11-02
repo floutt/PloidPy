@@ -19,30 +19,36 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, map_quality = 15):
     qual_dnm = 0
     nuc_map = {"a":0, "t":1, "g":2, "c":3}
 
-    def pcol_iter(pcol):
-        ATGC = np.zeros(4)
-        bases = pcol.get_query_sequences()
-        for b in bases:
-            if b == '': continue
-            ATGC[nuc_map[b.lower()]] += 1
-        ATGC = ATGC[ATGC > 0]
-        if not len(ATGC) == 2:
-            return
-        out.write("%d %d\n" % (np.min(ATGC), np.sum(ATGC)))
-
     if bed:
         f = open(bed)
         for line in f:
             br = line.split()
             for pcol in bam.pileup(br[0], int(br[1]), int(br[2]), min_base_quality = map_quality):
-                pcol_iter(pcol)
+                ATGC = np.zeros(4)
+                bases = pcol.get_query_sequences()
+                for b in bases:
+                    if b == '': continue
+                    ATGC[nuc_map[b.lower()]] += 1
+                ATGC = ATGC[ATGC > 0]
+                if not len(ATGC) == 2:
+                    continue
+                out.write("%d %d\n" % (np.min(ATGC), np.sum(ATGC)))
                 qual_num += np.sum(10 ** -(np.array(pcol.get_query_qualities())/10))
                 qual_dnm += pcol.get_num_aligned()
     else:
         for pcol in bam.pileup(min_base_quality = map_quality):
-            pcol_iter(pcol)
+            ATGC = np.zeros(4)
+            bases = pcol.get_query_sequences()
+            for b in bases:
+                if b == '': continue
+                ATGC[nuc_map[b.lower()]] += 1
+            ATGC = ATGC[ATGC > 0]
+            if not len(ATGC) == 2:
+                continue
+            out.write("%d %d\n" % (np.min(ATGC), np.sum(ATGC)))
             qual_num += np.sum(10 ** -(np.array(pcol.get_query_qualities())/10))
             qual_dnm += pcol.get_num_aligned()
+
     print("Base quality error probability:")
     print(qual_num/qual_dnm)
     out.close()
