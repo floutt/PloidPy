@@ -1,10 +1,18 @@
 import argparse
 import scipy.stats as sts
 import numpy as np
+import sys
 import process_bam as pb
 import ploidy_model as pm
 import plot_read_data as plot
 import nbinom as nb
+
+
+def save_tsv(aicllh, pld, out):
+    out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\tBinomial_Err_Weight\n")
+    for i in range(len(pld)):
+        w = str(aicllh[2][i])[1:-1].split()
+        out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-2]), w[-1], w[-2]))
 
 
 if __name__ == '__main__':
@@ -29,6 +37,9 @@ if __name__ == '__main__':
     assess = subparsers.add_parser("assess")
     assess.add_argument("--count_file", required = True)
     assess.add_argument("--ploidies", nargs='+', type = int, required = True)
+    assess.add_argument("--error_prob", type = float, required = True)
+    assess.add_argument("--out", default = None)
+
 
     args = parser.parse_args()
 
@@ -51,8 +62,11 @@ if __name__ == '__main__':
         cnts = np.loadtxt(args.count_file)
         r, p_nb = nb.fit_nbinom(cnts[:,1])
         pld = np.array(args.ploidies)
-        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb)
-        print(aicllh[0])
-        print(aicllh[1])
-        print(pld)
+        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, args.error_prob)
+        if args.out:
+            f = open(args.out, "w+")
+            save_tsv(aicllh, pld, f)
+            f.close()
+        else:
+            save_tsv(aicllh, pld, sys.stdout)
         print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))
