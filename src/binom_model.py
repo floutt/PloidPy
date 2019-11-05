@@ -3,6 +3,8 @@ import nbinom as nb
 from scipy.stats import binom, nbinom, randint
 
 
+EPS = np.finfo(np.float64).tiny
+
 # since we are using calculations based off of the minor allele frequency, we
 # have to use a truncated binomial instead of the traditional one. In order to
 # adjust for this we normalize the data based off of this. The maximum possible
@@ -30,12 +32,15 @@ def uniform_pmf(x, r, p_nb):
 
 
 # calculates a matrix of the binom_mix for a vector of p values
-def get_Likelihood(x, p, r, p_nb):
+def get_Likelihood(x, p, r, p_nb, p_err):
     # likelihood of p
-    lh = np.ones((len(p) + 1, len(x)))
+    lh = np.ones((len(p) + 2, len(x)))
     for i in range(len(p)):
         lh[i] = compound_nb_binom_pmf(x, p[i], r, p_nb)
     lh[-1] = uniform_pmf(x, r, p_nb)
+    lh[-2] = compound_nb_binom_pmf(x, p_err, r, p_nb)
+    lh[-2][np.isnan(lh[-2])] = EPS
+    lh[-1][np.isnan(lh[-1])] = EPS
     return lh
 
 
