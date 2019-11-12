@@ -63,7 +63,7 @@ def denoise_reads(readfile, p_err):
         return np.sum(np.log(mat))
 
     reads = np.loadtxt(readfile)
-
+    original_len = len(reads)
     x = reads[:,0]
     error_model = stats.binom(np.mean(reads[:,1]), p_err)
     em_lh = error_model.pmf(x)
@@ -91,4 +91,6 @@ def denoise_reads(readfile, p_err):
 
     print("Performed %s iterations" % iters)
     print(nm_mean, nm_std)
+    print("")
+    print("%s percent of data removed" % ((1 - (sum(posterior == 1)/original_len)) * 100))
     return posterior, reads[posterior == 1]

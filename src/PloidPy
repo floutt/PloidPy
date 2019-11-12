@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import scipy.stats as sts
 import numpy as np
@@ -25,10 +27,10 @@ if __name__ == '__main__':
     process_bam.add_argument("--bed", default = False)
     process_bam.add_argument("--quality", default = 15, type = int)
 
-    denoise = subparsers.add_parser("denoise")
+    denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required = True)
     denoise.add_argument("--out", required = True)
-    denoise.add_argument("--err_file", required = True)
+    denoise.add_argument("--error_prob", type = float, required = True)
 
     histo = subparsers.add_parser("histo")
     histo.add_argument("--count_file", required = True)
@@ -49,9 +51,9 @@ if __name__ == '__main__':
             print("\tprocessing subset found in %s" % args.bed)
         pb.get_biallelic_coverage(args.bam, args.out, args.bed, args.quality)
         print("Success!")
-    elif args.subparser == 'denoise':
-        print("Denoising count file %s..." % args.count_file)
-        np.savetxt(args.out, pb.denoise_reads(args.count_file, args.err_file),
+    elif args.subparser == 'filter':
+        print("Filtering count file %s..." % args.count_file)
+        np.savetxt(args.out, pb.denoise_reads(args.count_file, args.error_prob)[1],
                    fmt='%d')
         print("Filtered data sucessfully saved in %s" % args.out)
     elif args.subparser == 'histo':
