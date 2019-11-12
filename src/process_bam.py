@@ -26,7 +26,7 @@ def get_biallelic_coverage(bamfile, outfile, bed = False, map_quality = 15):
         ATGC = [0, 0, 0, 0]
         bases = pcol.get_query_sequences()
         for b in bases:
-            if b == '' or b == 'N': continue
+            if b == '' or b == 'N' or b == 'n': continue
             ATGC[nuc_map[b]] += 1
         ATGC = list(filter(gt_0, ATGC))
         if not len(ATGC) == 2:
