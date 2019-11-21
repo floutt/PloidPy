@@ -24,9 +24,10 @@ def weighted_Ploidy_Log_Likelihood(lh):
 # list of ploidy models. Returns a tuple with the log likelihood values and the
 # AIC values
 def get_Log_Likelihood_AIC(x, models, r, p_nb, p_err):
+    add_param = 2 if p_err == 0 else 3
     w_lh = np.zeros(np.shape(models))
     w = []
-    k = (np.floor(models / 2) * 2) + 4
+    k = (np.floor(models / 2) * 2) + add_param
     for i in range(len(models)):
         w_lh[i], w0 = weighted_Ploidy_Log_Likelihood(
             ploidy_Likelihood(x, models[i], r, p_nb, p_err))

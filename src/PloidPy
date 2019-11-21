@@ -10,8 +10,11 @@ import plot_read_data as plot
 import nbinom as nb
 
 
-def save_tsv(aicllh, pld, out):
-    out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\tBinomial_Err_Weight\n")
+def save_tsv(aicllh, pld, out, incl):
+    if incl:
+        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\tBinomial_Err_Weight\n")
+    else:
+        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\n")
     for i in range(len(pld)):
         w = str(aicllh[2][i])[1:-1].split()
         out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-2]), w[-1], w[-2]))
@@ -38,8 +41,10 @@ if __name__ == '__main__':
 
     assess = subparsers.add_parser("assess")
     assess.add_argument("--count_file", required = True)
+    assess.add_argument("--min_cov",type = int, default = 1)
+    assess.add_argument("--max_cov", type = int, default = 0)
     assess.add_argument("--ploidies", nargs='+', type = int, required = True)
-    assess.add_argument("--error_prob", type = float, required = True)
+    assess.add_argument("--error_prob", type = float, default = 0)
     assess.add_argument("--out", default = None)
 
 
@@ -62,13 +67,15 @@ if __name__ == '__main__':
         print("Files saved in %s.pdf!" % args.out)
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
+        #max_v = np.percentile(cnts[:,1], 95) if args.max_cov == 0 else args.max_cov
+        #cnts = cnts[np.logical_and(cnts[:,1] >= args.min_cov, cnts[:,1] <= max_v)]
         r, p_nb = nb.fit_nbinom(cnts[:,1])
         pld = np.array(args.ploidies)
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, args.error_prob)
         if args.out:
             f = open(args.out, "w+")
-            save_tsv(aicllh, pld, f)
+            save_tsv(aicllh, pld, f, not args.error_prob == 0)
             f.close()
         else:
-            save_tsv(aicllh, pld, sys.stdout)
+            save_tsv(aicllh, pld, sys.stdout, not args.error_prob == 0)
         print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))

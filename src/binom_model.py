@@ -33,14 +33,16 @@ def uniform_pmf(x, r, p_nb):
 
 # calculates a matrix of the binom_mix for a vector of p values
 def get_Likelihood(x, p, r, p_nb, p_err):
+    extra_param = 1 if p_err == 0 else 2
     # likelihood of p
-    lh = np.ones((len(p) + 2, len(x)))
+    lh = np.ones((len(p) + extra_param, len(x)))
     for i in range(len(p)):
         lh[i] = compound_nb_binom_pmf(x, p[i], r, p_nb)
     lh[-1] = uniform_pmf(x, r, p_nb)
-    lh[-2] = compound_nb_binom_pmf(x, p_err, r, p_nb)
-    lh[-2][np.isnan(lh[-2])] = EPS
     lh[-1][np.isnan(lh[-1])] = EPS
+    if not p_err == 0:
+        lh[-2] = compound_nb_binom_pmf(x, p_err, r, p_nb)
+        lh[-2][np.isnan(lh[-2])] = EPS
     return lh
 
 
