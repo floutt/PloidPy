@@ -17,7 +17,10 @@ def save_tsv(aicllh, pld, out, incl):
         out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\n")
     for i in range(len(pld)):
         w = str(aicllh[2][i])[1:-1].split()
-        out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-2]), w[-1], w[-2]))
+        if incl:
+            out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-2]), w[-1], w[-2]))
+        else:
+            out.write("%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-1]), w[-1]))
 
 
 if __name__ == '__main__':
