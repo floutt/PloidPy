@@ -1,7 +1,6 @@
 import numpy as np
 import binom_model as bm
 
-
 EPS = np.finfo(np.float64).tiny
 
 
@@ -17,7 +16,7 @@ def weighted_Ploidy_Log_Likelihood(lh):
     w = bm.get_Weights(lh)
     a = np.multiply(lh, w[:, np.newaxis])
     a[a == 0] = EPS
-    return np.sum(np.log(np.sum(a, axis = 0))), w
+    return np.sum(np.log(np.sum(a, axis=0))), w
 
 
 # Calculates the  Akaike Information Criterion (AIC) value of x when given a
