@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import scipy.stats as sts
 import numpy as np
 import sys
 import process_bam as pb
@@ -12,44 +11,62 @@ import nbinom as nb
 
 def save_tsv(aicllh, pld, out, incl):
     if incl:
-        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\tBinomial_Err_Weight\n")
+        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight" +
+                  "\tBinomial_Err_Weight\n")
     else:
         out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\n")
     for i in range(len(pld)):
         w = str(aicllh[2][i])[1:-1].split()
         if incl:
-            out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-2]), w[-1], w[-2]))
+            out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i],
+                                                    aicllh[1][i],
+                                                    ",".join(w[:-2]), w[-1],
+                                                    w[-2]))
         else:
-            out.write("%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i], ",".join(w[:-1]), w[-1]))
+            out.write("%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i],
+                                                aicllh[1][i], ",".join(w[:-1]),
+                                                w[-1]))
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    desc = "Toolkit for ploidy evaluation"
+    parser = argparse.ArgumentParser(prog="PloidPy", description=desc)
     subparsers = parser.add_subparsers(dest='subparser')
 
+    # help descriptions
+    bam_desc = "BAM file"
+    count_desc = "file containing MAC and TRC values"
+    bed_desc = "coordinates for areas to be assessed in BED format"
+    qty_desc = "minimum Phred mapping quality (inclusive)"
+    err_desc = "mean base call error probability"
+
     process_bam = subparsers.add_parser("process_bam")
-    process_bam.add_argument("--bam", required = True)
-    process_bam.add_argument("--out", required = True)
-    process_bam.add_argument("--bed", default = False)
-    process_bam.add_argument("--quality", default = 15, type = int)
+    process_bam.add_argument("--bam", required=True, help=bam_desc)
+    process_bam.add_argument("--out", required=True, help=count_desc)
+    process_bam.add_argument("--bed", default=False, help=bed_desc)
+    process_bam.add_argument("--quality", default=15, type=int, help=qty_desc)
 
     denoise = subparsers.add_parser("filter")
-    denoise.add_argument("--count_file", required = True)
-    denoise.add_argument("--out", required = True)
-    denoise.add_argument("--error_prob", type = float, required = True)
+    denoise.add_argument("--count_file", required=True, help=count_desc)
+    denoise.add_argument("--out", required=True, help="filtered count file")
+    denoise.add_argument("--error_prob", type=float, required=True,
+                         help=err_desc)
 
     histo = subparsers.add_parser("histo")
-    histo.add_argument("--count_file", required = True)
-    histo.add_argument("--out", required = True)
+    histo.add_argument("--count_file", required=True, help=count_desc)
+    histo.add_argument("--out", required=True, help="output image")
 
     assess = subparsers.add_parser("assess")
-    assess.add_argument("--count_file", required = True)
-    assess.add_argument("--min_cov",type = int, default = 1)
-    assess.add_argument("--max_cov", type = int, default = 0)
-    assess.add_argument("--ploidies", nargs='+', type = int, required = True)
-    assess.add_argument("--error_prob", type = float, default = 0)
-    assess.add_argument("--out", default = None)
-
+    assess.add_argument("--count_file", required=True, help=count_desc)
+    assess.add_argument("--min_cov", type=int, default=1,
+                        help="minimum TRC to be evaluated")
+    assess.add_argument("--max_cov", type=int, default=0,
+                        help="maximum TRC to be evaluated")
+    assess.add_argument("--ploidies", nargs='+', type=int, required=True,
+                        help="Ploidy models to be compared.")
+    assess.add_argument("--error_prob", type=float, default=0, help=err_desc)
+    assess.add_argument("--out", default=None,
+                        help="statistics table in tab-separated format")
 
     args = parser.parse_args()
 
@@ -61,7 +78,8 @@ if __name__ == '__main__':
         print("Success!")
     elif args.subparser == 'filter':
         print("Filtering count file %s..." % args.count_file)
-        np.savetxt(args.out, pb.denoise_reads(args.count_file, args.error_prob)[1],
+        np.savetxt(args.out,
+                   pb.denoise_reads(args.count_file, args.error_prob)[1],
                    fmt='%d')
         print("Filtered data sucessfully saved in %s" % args.out)
     elif args.subparser == 'histo':
@@ -70,9 +88,12 @@ if __name__ == '__main__':
         print("Files saved in %s.pdf!" % args.out)
     elif args.subparser == 'assess':
         cnts = np.loadtxt(args.count_file)
-        #max_v = np.percentile(cnts[:,1], 95) if args.max_cov == 0 else args.max_cov
-        #cnts = cnts[np.logical_and(cnts[:,1] >= args.min_cov, cnts[:,1] <= max_v)]
-        r, p_nb = nb.fit_nbinom(cnts[:,1])
+        if not args.max_cov == 0:
+            cnts = cnts[np.logical_and(cnts[:, 1] >= args.min_cov,
+                                       cnts[:, 1] <= args.max_cov)]
+        else:
+            cnts = cnts[cnts[:, 1] >= args.min_cov]
+        r, p_nb = nb.fit_nbinom(cnts[:, 1])
         pld = np.array(args.ploidies)
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, args.error_prob)
         if args.out:
@@ -81,4 +102,8 @@ if __name__ == '__main__':
             f.close()
         else:
             save_tsv(aicllh, pld, sys.stdout, not args.error_prob == 0)
-        print("The most likely model is %s-ploid." % pm.select_model(aicllh[1], pld))
+        print("The most likely model is %s-ploid." %
+              pm.select_model(aicllh[1], pld))
+    else:
+        print("error: one of the following subcommands is required: " +
+              "process_bam, filter, histo, assess")
