@@ -3,10 +3,10 @@
 import argparse
 import numpy as np
 import sys
-from PloidPy import process_bam as pb
-from PloidPy import ploidy_model as pm
-from PloidPy import plot_read_data as plot
-from PloidPy import nbinom as nb
+import PloidPy.process_bam as pb
+import PloidPy.ploidy_model as pm
+import PloidPy.plot_read_data as plot
+import PloidPy.nbinom as nb
 
 
 def save_tsv(aicllh, pld, out, incl):
