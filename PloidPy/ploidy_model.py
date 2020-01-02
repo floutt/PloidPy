@@ -1,5 +1,5 @@
 import numpy as np
-import binom_model as bm
+import PloidPy.binom_model as bm
 
 EPS = np.finfo(np.float64).tiny
 
