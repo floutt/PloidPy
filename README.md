@@ -36,5 +36,4 @@ PloidPy process_bam --bam Ploidy2.bowtie2.sorted.bam --out diploid.count --quali
 PloidPy process_bam --bam Ploidy3.bowtie2.sorted.bam --out triploid.count --quality 15
 PloidPy process_bam --bam Ploidy4.bowtie2.sorted.bam --out tetraploid.count --quality 15
 ```
-
-In addition to providing raw data for 
+In addition to providing raw data to be used, the output from this also calculates the mean base call error probability (p_err) from each file. This will be important for both filtering the data and ploidy evaluation of unfiltered data. In the examples above the diploid, triploid, and tetraploid individuals have p_err values of `0.0012170473202784014`, `0.001184570850292672`, and `0.0011672555287687418` respectively.
