@@ -57,5 +57,27 @@ PloidPy assess --count_file diploid.count --out diploid.tsv --ploidies 2 3 4 5 6
 PloidPy assess --count_file triploid.count --out triploid.tsv --ploidies 2 3 4 5 6 7 8 --error_prob 0.001184570850292672
 PloidPy assess --count_file tetraploid.count --out tetraploid.tsv --ploidies 2 3 4 5 6 7 8 --error_prob 0.0011672555287687418
 ```
-As you can see, in both cases all of the predictions were correct! Additional information can be found in the \*tsv files.
+As you can see, in both cases all of the predictions were correct! Additional information can be found in the \*tsv files. Each column represents the following:
+
+|Column        |Meaning|
+|---------------|-------|
+|Ploidy        |Ploidy model|
+|Log_Likelihood|Log likelihood of ploidy model|
+|AIC           |AIC value of ploidy model|
+|Het_Weights   |Weight parameter of each heterozygous state component|
+|Uniform Weight|Weight parameter of the uniform component of the model|
+
+Additionally, the filtered data can be used to produce helpful figures to visualize the joint distribution of TRC and MAC values. This can be done with the following commands:
+```
+PloidPy histo --count_file diploid.count.filtered --out diploid
+PloidPy histo --count_file triploid.count.filtered --out triploid
+PloidPy histo --count_file tetraploid.count.filtered --out tetraploid
+```
+And here are the images!
+#### **Diploid**
+<img src="https://i.imgur.com/1u5oZur.png" width="400" height="400"></img>
+#### **Triploid**
+<img src="https://i.imgur.com/e5NBERR.png" width="400" height="400"></img>
+#### **Tetraploid**
+<img src="https://i.imgur.com/XW4YFkn.png" width="400" height="400"></img>
 
