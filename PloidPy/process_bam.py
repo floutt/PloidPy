@@ -30,7 +30,7 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
             ATGC[nuc_map[b]] += 1
         ATGC = list(filter(gt_0, ATGC))
         a_num = len(ATGC)
-        allele_num[a_num] += 1
+        allele_num[a_num - 1] += 1
         if not a_num == 2:
             return False
         out.write("%d %d\n" % (min(ATGC), sum(ATGC)))
