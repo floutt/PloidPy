@@ -54,6 +54,8 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
                 qual_dnm += pcol.get_num_aligned()
     print("Base quality error probability:")
     print(qual_num/qual_dnm)
+    print("1\t2\t3\t4")
+    print("\t".join(list(map(str, allele_num))))
     out.close()
 
 
