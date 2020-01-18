@@ -1,6 +1,7 @@
 import numpy as np
 import pysam
 import scipy.stats as stats
+import time
 
 # in the case that a value produces a probability of 0 (or a probability lower
 # than what can be represented with floating-point numbers, we replace it with
@@ -11,6 +12,7 @@ EPS = np.finfo(np.float64).tiny
 
 
 def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
+    start = time.time()
     bam = pysam.AlignmentFile(bamfile, "rb")
     out = open(outfile, "w+")
     qual_num = 0
@@ -57,6 +59,8 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
     print("1\t2\t3\t4")
     print("\t".join(list(map(str, allele_num))))
     out.close()
+    end = time.time()
+    print("Processed finished in %s seconds" % (end - start))
 
 
 # denoises read count file generated from get_biallelic_coverage by removing
