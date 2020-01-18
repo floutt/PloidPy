@@ -1,4 +1,6 @@
 import setuptools
+from Cython.Build import cythonize
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -20,4 +22,5 @@ setuptools.setup(
     ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
+    ext_modules=cythonize('PloidPy/process_bam.pyx')
 )
