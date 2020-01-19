@@ -1,4 +1,5 @@
 from cpython cimport array
+from pysam.libcalignmentfile cimport AlignmentFile
 import numpy as np
 import pysam
 import scipy.stats as stats
@@ -14,15 +15,13 @@ EPS = np.finfo(np.float64).tiny
 
 def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
     start = time.time()
+    cdef AlignmentFile bam
     bam = pysam.AlignmentFile(bamfile, "rb")
     out = open(outfile, "w+")
     cdef float qual_num = 0.0
     cdef int qual_dnm = 0
     nuc_map = {"a": 0, "t": 1, "g": 2, "c": 3, "A": 0, "T": 1, "G": 2, "C": 3}
     cdef array.array allele_num = array.array('i', [0, 0, 0, 0])
-
-    def gt_0(x):
-        return x > 0
 
     def pcol_iter(pcol):
         cdef array.array ATGC = array.array('i', [0, 0, 0, 0])
@@ -33,6 +32,7 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
             if b == '' or b == 'N' or b == 'n':
                 continue
             ATGC[nuc_map[b]] += 1
+        cdef a_num, min_cnt, max_cnt
         a_num = 0
         min_cnt = ATGC[0]
         max_cnt = 0
@@ -46,7 +46,6 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
             elif cnt < min_cnt:
                 min_cnt = ATGC[i]
 
-        #a_num = len(ATGC)
         allele_num[a_num - 1] += 1
         if not a_num == 2:
             return False
@@ -75,7 +74,7 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
     print("\t".join(list(map(str, allele_num))))
     out.close()
     end = time.time()
-    print("Processed finished in %s seconds" % (end - start))
+    print("Process finished in %s seconds" % (end - start))
 
 
 # denoises read count file generated from get_biallelic_coverage by removing

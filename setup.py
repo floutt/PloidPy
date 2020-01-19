@@ -1,9 +1,17 @@
 import setuptools
 from Cython.Build import cythonize
+from pysam import get_include as pysam_get_include
+from distutils.extension import Extension
 
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+extensions = [
+    Extension(
+       'PloidPy.process_bam', ['PloidPy/process_bam.pyx'],
+       include_dirs=pysam_get_include()),
+]
 
 setuptools.setup(
     name="PloidPy-oaolayin",
@@ -22,5 +30,7 @@ setuptools.setup(
     ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
-    ext_modules=cythonize('PloidPy/process_bam.pyx')
+    # ext_modules=cythonize('PloidPy/process_bam.pyx',
+    #                      include_path=pysam_get_include())
+    ext_modules=cythonize(extensions)
 )
