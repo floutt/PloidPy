@@ -18,8 +18,8 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
     cdef AlignmentFile bam
     bam = pysam.AlignmentFile(bamfile, "rb")
     out = open(outfile, "w+")
-    cdef float qual_num = 0.0
-    cdef int qual_dnm = 0
+    qual_num = 0.0
+    qual_dnm = 0
     nuc_map = {"a": 0, "t": 1, "g": 2, "c": 3, "A": 0, "T": 1, "G": 2, "C": 3}
     cdef array.array allele_num = array.array('i', [0, 0, 0, 0])
 
