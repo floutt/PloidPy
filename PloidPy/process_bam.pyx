@@ -34,12 +34,14 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
             ATGC[nuc_map[b]] += 1
         cdef a_num, min_cnt, max_cnt
         a_num = 0
-        min_cnt = ATGC[0]
+        min_cnt = max(ATGC)
         max_cnt = 0
         #ATGC = list(filter(gt_0, ATGC))
         for i in range(len(ATGC)):
             cnt = ATGC[i]
-            if cnt > 0:
+            if cnt == 0:
+                continue
+            elif cnt > 0:
                 a_num += 1
             if cnt > max_cnt:
                 max_cnt = ATGC[i]
@@ -49,8 +51,9 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
         allele_num[a_num - 1] += 1
         if not a_num == 2:
             return False
-        out.write("%d %d\n" % (min_cnt, min_cnt + max_cnt))
-        return True
+        else:
+            out.write("%d %d\n" % (min_cnt, min_cnt + max_cnt))
+            return True
 
     if bed:
         f = open(bed)
