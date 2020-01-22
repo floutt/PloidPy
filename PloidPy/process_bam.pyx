@@ -34,14 +34,17 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
             ATGC[nuc_map[b]] += 1
         cdef a_num, min_cnt, max_cnt
         a_num = 0
-        min_cnt = max(ATGC)
+        min_cnt = 0
         max_cnt = 0
-        #ATGC = list(filter(gt_0, ATGC))
+        first = True
         for i in range(len(ATGC)):
             cnt = ATGC[i]
             if cnt == 0:
                 continue
-            elif cnt > 0:
+            elif first:
+                first = False
+                min_cnt = cnt
+            if cnt > 0:
                 a_num += 1
             if cnt > max_cnt:
                 max_cnt = ATGC[i]
@@ -52,7 +55,7 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
         if not a_num == 2:
             return False
         else:
-            out.write("%d %d\n" % (min_cnt, min_cnt + max_cnt))
+            out.write("%i %i\n" % (min_cnt, min_cnt + max_cnt))
             return True
 
     if bed:
@@ -60,13 +63,13 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
         for line in f:
             br = line.split()
             for pcol in bam.pileup(br[0], int(br[1]), int(br[2]),
-                                   min_base_quality=map_quality):
+                                   min_mapping_quality=map_quality):
                 if pcol_iter(pcol):
                     qual_num += sum(map(lambda x: 10 ** -(x/10),
                                         pcol.get_query_qualities()))
                     qual_dnm += pcol.get_num_aligned()
     else:
-        for pcol in bam.pileup(min_base_quality=map_quality):
+        for pcol in bam.pileup(min_mapping_quality=map_quality):
             if pcol_iter(pcol):
                 qual_num += sum(map(lambda x: 10 ** -(x/10),
                                     pcol.get_query_qualities()))
