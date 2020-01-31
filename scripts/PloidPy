@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import sys
+import os.path as path
 import PloidPy.process_bam as pb
 import PloidPy.ploidy_model as pm
 import PloidPy.plot_read_data as plot
@@ -75,8 +76,12 @@ if __name__ == '__main__':
     elif args.subparser == 'filter':
         print("Filtering count file %s..." % args.count_file)
         out = args.out if args.out[-3:] == ".gz" else args.out + ".gz"
-        np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
-        print("Filtered data sucessfully saved in %s" % out)
+        if path.exists(out):
+            IOError("File %s exists. Please choose another output name." %
+                    out)
+        else:
+            np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
+            print("Filtered data sucessfully saved in %s" % out)
     elif args.subparser == 'histo':
         cnts = np.loadtxt(args.count_file)
         plot.plot_joint_dist(cnts, args.out + ".pdf")
@@ -97,7 +102,10 @@ if __name__ == '__main__':
         p_err = float(info.readline().strip().split("\t")[1])
         info.close()
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err)
-        if args.out:
+        if path.exists(args.out):
+            IOError("File %s exists. Please choose another output name." %
+                    args.out)
+        elif args.out:
             f = open(args.out, "w+")
             save_tsv(aicllh, pld, f, not p_err == 0)
             f.close()
