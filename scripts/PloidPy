@@ -77,8 +77,8 @@ if __name__ == '__main__':
         print("Filtering count file %s..." % args.count_file)
         out = args.out if args.out[-3:] == ".gz" else args.out + ".gz"
         if path.exists(out):
-            IOError("File %s exists. Please choose another output name." %
-                    out)
+            raise IOError("File %s exists. Please choose another output name."
+                          % out)
         else:
             np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
             print("Filtered data sucessfully saved in %s" % out)
@@ -103,8 +103,8 @@ if __name__ == '__main__':
         info.close()
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err)
         if path.exists(args.out):
-            IOError("File %s exists. Please choose another output name." %
-                    args.out)
+            raise IOError("File %s exists. Please choose another output name."
+                          % args.out)
         elif args.out:
             f = open(args.out, "w+")
             save_tsv(aicllh, pld, f, not p_err == 0)

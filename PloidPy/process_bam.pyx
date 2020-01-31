@@ -24,7 +24,7 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
                  else outfile + ".info")
     # check if file exists
     if path.exists(outf) or path.exists(outfile) or path.exists(info_file):
-        IOError("Output file %s exists! Will not overwrite." % outfile)
+        raise IOError("Output file %s exists! Will not overwrite." % outfile)
     out = gzip.open(outf, "wt")
     qual_num = 0.0
     qual_dnm = 0
