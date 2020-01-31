@@ -38,7 +38,6 @@ if __name__ == '__main__':
     count_desc = "file containing MAC and TRC values"
     bed_desc = "coordinates for areas to be assessed in BED format"
     qty_desc = "minimum Phred mapping quality (inclusive)"
-    err_desc = "mean base call error probability"
 
     process_bam = subparsers.add_parser("process_bam")
     process_bam.add_argument("--bam", required=True, help=bam_desc)
@@ -49,8 +48,6 @@ if __name__ == '__main__':
     denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required=True, help=count_desc)
     denoise.add_argument("--out", required=True, help="filtered count file")
-    denoise.add_argument("--error_prob", type=float, required=True,
-                         help=err_desc)
 
     histo = subparsers.add_parser("histo")
     histo.add_argument("--count_file", required=True, help=count_desc)
@@ -64,7 +61,6 @@ if __name__ == '__main__':
                         help="maximum TRC to be evaluated")
     assess.add_argument("--ploidies", nargs='+', type=int, required=True,
                         help="Ploidy models to be compared.")
-    assess.add_argument("--error_prob", type=float, default=0, help=err_desc)
     assess.add_argument("--out", default=None,
                         help="statistics table in tab-separated format")
 
@@ -78,10 +74,9 @@ if __name__ == '__main__':
         print("Success!")
     elif args.subparser == 'filter':
         print("Filtering count file %s..." % args.count_file)
-        np.savetxt(args.out,
-                   pb.denoise_reads(args.count_file, args.error_prob)[1],
-                   fmt='%d')
-        print("Filtered data sucessfully saved in %s" % args.out)
+        out = args.out if args.out[-3:] == ".gz" else args.out + ".gz"
+        np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
+        print("Filtered data sucessfully saved in %s" % out)
     elif args.subparser == 'histo':
         cnts = np.loadtxt(args.count_file)
         plot.plot_joint_dist(cnts, args.out + ".pdf")
@@ -95,13 +90,19 @@ if __name__ == '__main__':
             cnts = cnts[cnts[:, 1] >= args.min_cov]
         r, p_nb = nb.fit_nbinom(cnts[:, 1])
         pld = np.array(args.ploidies)
-        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, args.error_prob)
+        info_file = (args.count_file[:-3] + ".info"
+                     if args.count_file[-3:] == ".gz"
+                     else args.count_file + ".info")
+        info = open(info_file)
+        p_err = float(info.readline().strip().split("\t")[1])
+        info.close()
+        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err)
         if args.out:
             f = open(args.out, "w+")
-            save_tsv(aicllh, pld, f, not args.error_prob == 0)
+            save_tsv(aicllh, pld, f, not p_err == 0)
             f.close()
         else:
-            save_tsv(aicllh, pld, sys.stdout, not args.error_prob == 0)
+            save_tsv(aicllh, pld, sys.stdout, not p_err == 0)
         print("The most likely model is %s-ploid." %
               pm.select_model(aicllh[1], pld))
     else:

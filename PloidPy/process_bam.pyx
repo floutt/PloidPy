@@ -4,6 +4,8 @@ import numpy as np
 import pysam
 import scipy.stats as stats
 import time
+import gzip
+import os.path as path
 
 # in the case that a value produces a probability of 0 (or a probability lower
 # than what can be represented with floating-point numbers, we replace it with
@@ -17,7 +19,13 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
     start = time.time()
     cdef AlignmentFile bam
     bam = pysam.AlignmentFile(bamfile, "rb")
-    out = open(outfile, "w+")
+    outf = outfile if outfile[-3:] == ".gz" else outfile + ".gz"  # compressed
+    info_file = (outfile[:-3] + ".info" if outfile[-3:] == ".gz"
+                 else outfile + ".info")
+    # check if file exists
+    if path.exists(outf) or path.exists(outfile) or path.exists(info_file):
+        IOError("Output file %s exists! Will not overwrite." % outfile)
+    out = gzip.open(outf, "wt")
     qual_num = 0.0
     qual_dnm = 0
     nuc_map = {"a": 0, "t": 1, "g": 2, "c": 3, "A": 0, "T": 1, "G": 2, "C": 3}
@@ -74,13 +82,18 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
                 qual_num += sum(map(lambda x: 10 ** -(x/10),
                                     pcol.get_query_qualities()))
                 qual_dnm += pcol.get_num_aligned()
-    print("Base quality error probability:")
-    print(qual_num/qual_dnm)
-    print("1\t2\t3\t4")
-    print("\t".join(list(map(str, allele_num))))
+    info = open(info_file, "w+")
+    info.write("p_err\t%s\n" % (qual_num/qual_dnm))
+    info.write("1-count\t%s\n" % allele_num[0])
+    info.write("2-count\t%s\n" % allele_num[1])
+    info.write("3-count\t%s\n" % allele_num[2])
+    info.write("4-count\t%s\n" % allele_num[3])
+    info.close()
     out.close()
+    print("Count data stored in %s" % outf)
+    print("Secondary information stored in %s" % info_file)
     end = time.time()
-    print("Process finished in %s seconds" % (end - start))
+    print("Process finished in %s minutes" % ((end - start)/60))
 
 
 # denoises read count file generated from get_biallelic_coverage by removing
@@ -88,11 +101,16 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15):
 # comparing the data to a given binomial error model. A normal distribution is
 # used to represent the "true" data - not because it is necessarily
 # representative
-def denoise_reads(readfile, p_err):
+def denoise_reads(readfile):
     # calculates the log likelihood value of an array of likelihood values
     def log_lh(mat):
         return np.sum(np.log(mat))
 
+    info_file = (readfile[:-3] + ".info" if readfile[-3:] == ".gz"
+                 else readfile + ".info")
+    info = open(info_file)
+    p_err = float(info.readline().strip().split("\t")[1])
+    info.close()
     reads = np.loadtxt(readfile)
     original_len = len(reads)
     x = reads[:, 0]
