@@ -109,7 +109,6 @@ if __name__ == '__main__':
                 raise IOError(
                     "File %s exists. Please choose another output name."
                     % args.out)
-        elif args.out:
             f = open(args.out, "w+")
             save_tsv(aicllh, pld, f, not p_err == 0)
             f.close()
