@@ -98,13 +98,17 @@ if __name__ == '__main__':
         info_file = (args.count_file[:-3] + ".info"
                      if args.count_file[-3:] == ".gz"
                      else args.count_file + ".info")
-        info = open(info_file)
-        p_err = float(info.readline().strip().split("\t")[1])
-        info.close()
+        p_err = 0
+        if path.exists(info_file):
+            info = open(info_file)
+            p_err = float(info.readline().strip().split("\t")[1])
+            info.close()
         aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err)
-        if path.exists(args.out):
-            raise IOError("File %s exists. Please choose another output name."
-                          % args.out)
+        if args.out:
+            if path.exists(args.out):
+                raise IOError(
+                    "File %s exists. Please choose another output name."
+                    % args.out)
         elif args.out:
             f = open(args.out, "w+")
             save_tsv(aicllh, pld, f, not p_err == 0)
