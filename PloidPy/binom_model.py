@@ -52,19 +52,19 @@ def get_Weights(lh):
     size = len(lh)
     w = np.ones(size)/size
 
-    # calculate the responsibilities given the weight
-    def calc_r():
-        r0 = np.multiply(lh, w[:, np.newaxis])
-        r0[r0 == 0] = EPS
-        return r0
-    old_r = calc_r()
-    w = np.nanmean(old_r / np.sum(old_r, axis=0), axis=1)
-    r = calc_r()
-    if np.sum(np.log(r)) < np.sum(np.log(old_r)):
+    def calc_p():
+        p0 = np.multiply(lh, w[:, np.newaxis])
+        p0[p0 == 0] = EPS
+        return p0
+
+    old_p = calc_p()
+    w = np.nanmean(old_p / np.sum(old_p, axis=0), axis=1)
+    p = calc_p()
+    if np.sum(np.log(p)) < np.sum(np.log(old_p)):
         return w
     # stop when the function reaches a maximum
-    while np.sum(np.log(r)) > np.sum(np.log(old_r)):
-        w = np.nanmean(r / np.sum(r, axis=0), axis=1)
-        old_r = r
-        r = calc_r()
+    while np.sum(np.log(p)) > np.sum(np.log(old_p)):
+        w = np.nanmean(p / np.sum(p, axis=0), axis=1)
+        old_p = p
+        p = calc_p()
     return w
