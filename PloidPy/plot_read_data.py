@@ -12,6 +12,6 @@ def plot_joint_dist(a, savefile, max_cutoff = 0.95):
     maxv = uniq[0][np.where(cumdens >= max_cutoff)[0][0]]
     a0 = a[a[:,1] < maxv]
     (sns.jointplot(a0[:,0], a0[:,1], kind = "hex", color="blue")
-     .set_axis_labels("Minor Allele Coverage", "Total Allele Coverage"))
+     .set_axis_labels("Minor Allele Coverage", "Total Read Coverage"))
     plt.tight_layout()
     plt.savefig(savefile)
