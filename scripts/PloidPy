@@ -10,23 +10,28 @@ import PloidPy.plot_read_data as plot
 import PloidPy.nbinom as nb
 
 
-def save_tsv(aicllh, pld, out, incl):
-    if incl:
-        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight" +
-                  "\tBinomial_Err_Weight\n")
-    else:
-        out.write("Ploidy\tLog_Likelihood\tAIC\tHet_Weights\tUniform_Weight\n")
+def save_tsv(aicllh, pld, out, uniform_com, bin_err):
+    headers = ["Ploidy", "Log_Likelihood", "AIC", "Het_Weights"]
+    if uniform_com:
+        headers.append("Uniform_Weight")
+    if bin_err:
+        headers.append("Binomial_Err_Weight")
+    out.write("\t".join(headers) + "\n")
+    extra_params = uniform_com + bin_err
     for i in range(len(pld)):
         w = str(aicllh[2][i])[1:-1].split()
-        if incl:
+        if extra_params == 2:
             out.write("%s\t%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i],
                                                     aicllh[1][i],
                                                     ",".join(w[:-2]), w[-1],
                                                     w[-2]))
-        else:
+        elif extra_params == 1:
             out.write("%s\t%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i],
                                                 aicllh[1][i], ",".join(w[:-1]),
                                                 w[-1]))
+        else:
+            out.write("%s\t%s\t%s\t%s\n" % (pld[i], aicllh[0][i], aicllh[1][i],
+                                            ",".join(w)))
 
 
 if __name__ == '__main__':
@@ -64,6 +69,13 @@ if __name__ == '__main__':
                         help="Ploidy models to be compared.")
     assess.add_argument("--out", default=None,
                         help="statistics table in tab-separated format")
+    assess.add_argument("--uniform_weight", default=False,
+                        type=lambda x: (str(x).lower() == 'true'),
+                        help="[bool] True if weights are set to uniform")
+    assess.add_argument("--uniform_com", default=True,
+                        type=lambda x: (str(x).lower() == 'true'),
+                        help="""[bool] True if the uniform component of the
+                        mixture model is included""")
 
     args = parser.parse_args()
 
@@ -103,17 +115,19 @@ if __name__ == '__main__':
             info = open(info_file)
             p_err = float(info.readline().strip().split("\t")[1])
             info.close()
-        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err)
+        aicllh = pm.get_Log_Likelihood_AIC(cnts, pld, r, p_nb, p_err,
+                                           args.uniform_weight,
+                                           args.uniform_com)
         if args.out:
             if path.exists(args.out):
                 raise IOError(
                     "File %s exists. Please choose another output name."
                     % args.out)
             f = open(args.out, "w+")
-            save_tsv(aicllh, pld, f, not p_err == 0)
+            save_tsv(aicllh, pld, f, args.uniform_com, not p_err == 0)
             f.close()
         else:
-            save_tsv(aicllh, pld, sys.stdout, not p_err == 0)
+            save_tsv(aicllh, pld, sys.stdout, args.uniform_com, not p_err == 0)
         print("The most likely model is %s-ploid." %
               pm.select_model(aicllh[1], pld))
     else:

@@ -31,15 +31,25 @@ def uniform_pmf(x, r, p_nb):
 
 
 # calculates a matrix of the binom_mix for a vector of p values
-def get_Likelihood(x, p, r, p_nb, p_err):
-    extra_param = 1 if p_err == 0 else 2
+def get_Likelihood(x, p, r, p_nb, p_err, uniform_com=True):
+    extra_param = 0
+    if uniform_com:
+        extra_param += 1
+    if p_err > 0:
+        extra_param += 1
     # likelihood of p
     lh = np.ones((len(p) + extra_param, len(x)))
     for i in range(len(p)):
         lh[i] = compound_nb_binom_pmf(x, p[i], r, p_nb)
-    lh[-1] = uniform_pmf(x, r, p_nb)
-    lh[-1][np.isnan(lh[-1])] = EPS
-    if not p_err == 0:
+    if extra_param == 1:
+        if p_err > 0:
+            lh[-1] = compound_nb_binom_pmf(x, p_err, r, p_nb)
+        else:
+            lh[-1] = uniform_pmf(x, r, p_nb)
+        lh[-1][np.isnan(lh[-1])] = EPS
+    elif extra_param == 2:
+        lh[-1] = uniform_pmf(x, r, p_nb)
+        lh[-1][np.isnan(lh[-1])] = EPS
         lh[-2] = compound_nb_binom_pmf(x, p_err, r, p_nb)
         lh[-2][np.isnan(lh[-2])] = EPS
     return lh
@@ -48,9 +58,11 @@ def get_Likelihood(x, p, r, p_nb, p_err):
 # uses expectation maximization to get the weights of each subpopulation
 # model given a set of fixed distributions. Calculates the weights from
 # likelihood data
-def get_Weights(lh):
+def get_Weights(lh, uniform=False):
     size = len(lh)
     w = np.ones(size)/size
+    if uniform:
+        return w
 
     def calc_p():
         p0 = np.multiply(lh, w[:, np.newaxis])
