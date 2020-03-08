@@ -58,10 +58,10 @@ def get_Likelihood(x, p, r, p_nb, p_err, uniform_com=True):
 # uses expectation maximization to get the weights of each subpopulation
 # model given a set of fixed distributions. Calculates the weights from
 # likelihood data
-def get_Weights(lh, uniform=False):
+def get_Weights(lh, p_err, uniform=False, uniform_com=False):
     size = len(lh)
     w = np.ones(size)/size
-    if uniform:
+    if uniform and p_err == 0 and not uniform_com:
         return w
 
     def calc_p():
@@ -72,11 +72,18 @@ def get_Weights(lh, uniform=False):
     old_p = calc_p()
     w = np.nanmean(old_p / np.sum(old_p, axis=0), axis=1)
     p = calc_p()
-    if np.sum(np.log(p)) < np.sum(np.log(old_p)):
+    if not np.sum(np.log(p)) < np.sum(np.log(old_p)):
+        # stop when the function reaches a maximum
+        while np.sum(np.log(p)) > np.sum(np.log(old_p)):
+            w = np.nanmean(p / np.sum(p, axis=0), axis=1)
+            old_p = p
+            p = calc_p()
+
+    if not uniform:
         return w
-    # stop when the function reaches a maximum
-    while np.sum(np.log(p)) > np.sum(np.log(old_p)):
-        w = np.nanmean(p / np.sum(p, axis=0), axis=1)
-        old_p = p
-        p = calc_p()
-    return w
+    elif p_err and uniform_com:
+        w[:-2] = (np.sum(w) - np.sum(w[-2:])) / (len(w) - 2)
+        return w
+    else:
+        w[:-1] = (np.sum(w) - np.sum(w[-1:])) / (len(w) - 1)
+        return w

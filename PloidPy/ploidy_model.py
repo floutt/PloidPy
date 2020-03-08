@@ -12,8 +12,10 @@ def ploidy_Likelihood(x, n, r, p_nb, p_err, uniform_com=True):
     return bm.get_Likelihood(x, het_p, r, p_nb, p_err, uniform_com=uniform_com)
 
 
-def weighted_Ploidy_Log_Likelihood(lh, uniform_weights=False):
-    w = bm.get_Weights(lh, uniform=uniform_weights)
+def weighted_Ploidy_Log_Likelihood(lh, p_err, uniform_weights=False,
+                                   uniform_com=False):
+    w = bm.get_Weights(lh, p_err, uniform=uniform_weights,
+                       uniform_com=uniform_com)
     a = np.multiply(lh, w[:, np.newaxis])
     a[a == 0] = EPS
     return np.sum(np.log(np.sum(a, axis=0))), w
@@ -35,8 +37,8 @@ def get_Log_Likelihood_AIC(x, models, r, p_nb, p_err, uniform_weights=False,
     for i in range(len(models)):
         w_lh[i], w0 = weighted_Ploidy_Log_Likelihood(
             ploidy_Likelihood(x, models[i], r, p_nb, p_err,
-                              uniform_com=uniform_com),
-            uniform_weights=uniform_weights)
+                              uniform_com=uniform_com), p_err,
+            uniform_weights=uniform_weights, uniform_com=uniform_com)
         w += [w0]
     return (w_lh, (2 * k) - (2 * w_lh), w)
 
