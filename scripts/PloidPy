@@ -55,9 +55,9 @@ if __name__ == '__main__':
     denoise.add_argument("--count_file", required=True, help=count_desc)
     denoise.add_argument("--out", required=True, help="filtered count file")
 
-    histo = subparsers.add_parser("histo")
-    histo.add_argument("--count_file", required=True, help=count_desc)
-    histo.add_argument("--out", required=True, help="output image")
+    jdist = subparsers.add_parser("jdist")
+    jdist.add_argument("--count_file", required=True, help=count_desc)
+    jdist.add_argument("--out", required=True, help="output image")
 
     assess = subparsers.add_parser("assess")
     assess.add_argument("--count_file", required=True, help=count_desc)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         else:
             np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
             print("Filtered data sucessfully saved in %s" % out)
-    elif args.subparser == 'histo':
+    elif args.subparser == 'jdist':
         cnts = np.loadtxt(args.count_file)
         plot.plot_joint_dist(cnts, args.out + ".pdf")
         print("Files saved in %s.pdf!" % args.out)
@@ -132,4 +132,4 @@ if __name__ == '__main__':
               pm.select_model(aicllh[1], pld))
     else:
         print("error: one of the following subcommands is required: " +
-              "process_bam, filter, histo, assess")
+              "process_bam, filter, jdist, assess")
