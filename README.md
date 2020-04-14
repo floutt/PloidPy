@@ -80,21 +80,4 @@ PloidPy jdist --count_file triploid.count.filtered --out triploid
 PloidPy jdist --count_file tetraploid.count.filtered --out tetraploid
 ```
 
-A visual overview of this process can be found [here](https://github.com/floutt/PloidPy/blob/master/figures/PloidPy_visual_guide.pdf) as well as some example joint distribution figures.
-And here are the images!
-#### **Diploid**
-<object data="https://github.com/floutt/PloidPy/raw/master/figures/diploid_joint_dist.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/floutt/PloidPy/raw/master/figures/diploid_joint_dist.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="http://yoursite.com/the.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-#### **Triploid**
-<object data="https://github.com/floutt/PloidPy/raw/master/figures/triploid_joint_dist.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/floutt/PloidPy/raw/master/figures/triploid_joint_dist.pdf">
-    </embed>
-</object>
-#### **Tetraploid**
-<object data="https://github.com/floutt/PloidPy/raw/master/figures/tetraploid_joint_dist.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/floutt/PloidPy/raw/master/figures/tetraploid_joint_dist.pdf">
-    </embed>
-</object>
+A visual overview of this process can be found [here](https://github.com/floutt/PloidPy/blob/master/figures/PloidPy_visual_guide.pdf) as well as some example [joint](https://github.com/floutt/PloidPy/blob/master/figures/diploid_joint_dist.pdf) [distribution](https://github.com/floutt/PloidPy/blob/master/figures/triploid_joint_dist.pdf) [figures](https://github.com/floutt/PloidPy/blob/master/figures/tetraploid_joint_dist.pdf).
