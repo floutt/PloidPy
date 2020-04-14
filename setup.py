@@ -14,8 +14,8 @@ extensions = [
 ]
 
 setuptools.setup(
-    name="PloidPy-oaolayin",
-    version="0.1.0",
+    name="PloidPy",
+    version="1.0.0",
     author="Oluwatosin Olayinka",
     author_email="oaolayin@live.unc.edu",
     description="Discrete mixture model based ploidy inference tool",
@@ -30,7 +30,5 @@ setuptools.setup(
     ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
-    # ext_modules=cythonize('PloidPy/process_bam.pyx',
-    #                      include_path=pysam_get_include())
     ext_modules=cythonize(extensions)
 )
