@@ -28,6 +28,13 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+        'pysam',
+        'numpy',
+        'statsmodels',
+        'matplotlib',
+        'seaborn'
+    ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
     ext_modules=cythonize(extensions)
