@@ -56,6 +56,8 @@ if __name__ == '__main__':
     denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required=True, help=count_desc)
     denoise.add_argument("--out", required=True, help="filtered count file")
+    denoise.add_argument("--pthresh", required=True, default=1.0, type=float,
+                         help="posterior probability threshold")
 
     jdist = subparsers.add_parser("jdist")
     jdist.add_argument("--count_file", required=True, help=count_desc)
@@ -95,7 +97,8 @@ if __name__ == '__main__':
             raise IOError("File %s exists. Please choose another output name."
                           % out)
         else:
-            np.savetxt(out, pb.denoise_reads(args.count_file)[1], fmt='%d')
+            np.savetxt(out, pb.denoise_reads(args.count_file, args.pthresh)[1],
+                       fmt='%d')
             print("Filtered data sucessfully saved in %s" % out)
     elif args.subparser == 'jdist':
         cnts = np.loadtxt(args.count_file)
