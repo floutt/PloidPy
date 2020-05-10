@@ -44,12 +44,14 @@ if __name__ == '__main__':
     count_desc = "file containing MAC and TRC values"
     bed_desc = "coordinates for areas to be assessed in BED format"
     qty_desc = "minimum Phred mapping quality (inclusive)"
+    b_desc = "minimum base quality"
 
     process_bam = subparsers.add_parser("process_bam")
     process_bam.add_argument("--bam", required=True, help=bam_desc)
     process_bam.add_argument("--out", required=True, help=count_desc)
     process_bam.add_argument("--bed", default=False, help=bed_desc)
     process_bam.add_argument("--quality", default=15, type=int, help=qty_desc)
+    process_bam.add_argument("--base_qual", default=15, type=int, help=b_desc)
 
     denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required=True, help=count_desc)
@@ -83,7 +85,8 @@ if __name__ == '__main__':
         print("Now processing BAM file %s..." % args.bam)
         if args.bed:
             print("\tprocessing subset found in %s" % args.bed)
-        pb.get_biallelic_coverage(args.bam, args.out, args.bed, args.quality)
+        pb.get_biallelic_coverage(args.bam, args.out, args.bed, args.quality,
+                                  args.base_qual)
         print("Success!")
     elif args.subparser == 'filter':
         print("Filtering count file %s..." % args.count_file)
