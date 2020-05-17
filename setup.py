@@ -1,6 +1,5 @@
 import setuptools
 from Cython.Build import cythonize
-from pysam import get_include as pysam_get_include
 from distutils.extension import Extension
 
 
@@ -9,13 +8,15 @@ with open("README.md", "r") as fh:
 
 extensions = [
     Extension(
-       'PloidPy.process_bam', ['PloidPy/process_bam.pyx'],
-       include_dirs=pysam_get_include()),
+       'PloidPy.process_bam', ['PloidPy/process_bam.pyx',
+                               'PloidPy/parse_bam.c'],
+        libraries=["m"],
+    )
 ]
 
 setuptools.setup(
     name="PloidPy",
-    version="1.0.0",
+    version="1.1.0",
     author="Oluwatosin Olayinka",
     author_email="oaolayin@live.unc.edu",
     description="Discrete mixture model based ploidy inference tool",
@@ -29,7 +30,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'pysam',
         'numpy',
         'statsmodels',
         'matplotlib',
@@ -37,5 +37,6 @@ setuptools.setup(
     ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
+    headers=["parse_bam.h"],
     ext_modules=cythonize(extensions)
 )
