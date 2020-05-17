@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.stats as stats
 import statsmodels.discrete.discrete_model as dm
 
 
@@ -7,7 +6,8 @@ import statsmodels.discrete.discrete_model as dm
 # the parameters
 def fit_nbinom(x):
     print("Fitting total read count to negative binomial distribution...")
-    params = dm.NegativeBinomial(x, np.ones_like(x)).fit(maxiter=200000).params
+    params = dm.NegativeBinomial(x, np.ones_like(x)).fit(maxiter=200000,
+                                                         disp=0).params
     mu = np.exp(params[0])
     alpha = params[1]
     r = alpha ** -1
