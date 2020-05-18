@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <htslib/sam.h>
+#include <htslib/hts.h>
 
 
 void cmap(char *bam, samFile *fp_in, char *chrom, int start, int end,

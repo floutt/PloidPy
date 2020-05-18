@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <htslib/sam.h>
+#include <htslib/hts.h>
 
 #define ROWSTRIDE 4
 
