@@ -20,7 +20,6 @@ In order to run PloidPy, the following dependencies are required:
 - `Statsmodels`
 - `matplotlib`
 - `seaborn`
-- `pysam`
 
 ## Getting Started
 Once installed, PloidPy can be run on an indexed BAM file. For this tutorial we will download some BAM files created using simulated data from the [ploidyNGS](https://github.com/diriano/ploidyNGS) repository.
