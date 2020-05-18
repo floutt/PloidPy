@@ -1,12 +1,10 @@
-from cpython cimport array
-from pysam.libcalignmentfile cimport AlignmentFile, AlignedSegment
 import numpy as np
 cimport numpy as np
-import pysam
 import scipy.stats as stats
 import time
 import gzip
 import os.path as path
+from process_bam cimport *
 
 # in the case that a value produces a probability of 0 (or a probability lower
 # than what can be represented with floating-point numbers, we replace it with
@@ -15,105 +13,79 @@ import os.path as path
 # replaced with log(EPS)
 EPS = np.finfo(np.float64).tiny
 
-cdef float g_div = 0
-cdef int g_denom = 0
+cdef double numer = 0
+cdef long denom = 0
 
-
-cdef np.ndarray get_count(AlignmentFile bam, str contig,
-                                            int start=-1, end=-1,
-                                            int mapq_thresh=15,
-                                            int base_qual=13):
+# calculates the base-specific coverage of a specific region and stores data in
+# a NumPy array
+# b - string with location of BAM file
+# bamfile - pointer to C htsFile structure
+# c - contig/chromosome name
+# bamHdr - C header file struct for the corrosponding BAM file
+# start - start position in contig (0-index)
+# end - end position in contig
+# mapq_thresh - minimum mapping quality (Phred scale)
+# base_qual - minimum base quality (Phred scale)
+cdef np.ndarray get_count(char *b, htsFile *bamfile, char *c,
+                          sam_hdr_t *bamHdr, int start, int end,
+                          int mapq_thresh, int base_qual):
     if not ((start == end == -1) or (isinstance(start, int) and
                                        isinstance(end, int))):
         raise ValueError("""Invalid configuration of contig, start, and end
                          parameters""")
-    cdef int length
-    length = (bam.get_reference_length(contig) if (start == end == -1) else
-              end - start)
-    # count arrays
-    cdef np.ndarray ACGT
-    ACGT = np.zeros((4, length))
-    cdef float numer
-    cdef long denom
-    numer = 0
-    denom = 0
-    cdef AlignedSegment read
-    for read in bam.fetch(contig=contig, start=(None if start == -1 else start),
-                          end=(None if end == -1 else end)):
-        if (read.flag & (0x4 | 0x100 | 0x200 | 0x400)):
-            continue
-        if read.is_duplicate or read.is_qcfail or read.is_secondary or read.is_unmapped:
-            continue
-        if read.mapping_quality < mapq_thresh:
-            continue
+    cdef int ref_len = get_ref_length(bamHdr, c)
+    np_arr = np.zeros((ref_len, 4), dtype=np.dtype("i"))
+    cdef int[:,:] cm = np_arr
 
-        seq = read.seq
-
-        for r_pos, ref_pos in read.get_aligned_pairs(True):
-            if read.query_qualities[r_pos] < base_qual:
-                continue
-            else:
-                numer += 10 ** -(read.query_qualities[r_pos]/10)
-                denom += 1
-            start = (0 if start == -1 else start)
-            end = (length - 1 if end == -1 else end)
-            if r_pos is None or ref_pos is None:
-                continue
-            elif ref_pos > end or ref_pos < start:
-                continue
-
-            if seq[r_pos] == 'A':
-                ACGT[0][ref_pos - start] += 1
-            elif seq[r_pos] == 'C':
-                ACGT[1][ref_pos - start] += 1
-            elif seq[r_pos] == 'G':
-                ACGT[2][ref_pos - start] += 1
-            elif seq[r_pos] == 'T':
-                ACGT[3][ref_pos - start] += 1
-    global g_div
-    global g_denom
-    g_div = numer/denom
-    g_denom = denom
-    return ACGT
+    if start == -1:
+        start = 0
+    if end == -1:
+        end = ref_len
+    cmap(b, bamfile, c, start, end, mapq_thresh, base_qual, &numer, &denom,
+         &cm[0,0], bamHdr)
+    return np_arr
 
 
+# writes biallelic MAC and TRC values onto the file object f. Input ACGT coming
+# from get_count
+# ACGT - base coverage matrix
+# f - file object
 def get_MAC_TRC(ACGT, f):
-    length = len(ACGT[0])
-    # number of (i+1) allele sites
-    cnt = array.array('l', [0, 0, 0, 0])
-    for i in range(length):
-        num_allele = np.sum(ACGT[:,i] > 0)
-        cnt[num_allele - 1] += 1
-        if num_allele != 2:
-            continue
-        else:
-            min_val = float('inf')
-            summation = 0
-            if ACGT[0][i] != 0:
-                summation += ACGT[0][i]
-                if min_val > ACGT[0][i]:
-                    min_val = ACGT[0][i]
-            if ACGT[1][i] != 0:
-                summation += ACGT[1][i]
-                if min_val > ACGT[1][i]:
-                    min_val = ACGT[1][i]
-            if ACGT[2][i] != 0:
-                summation += ACGT[2][i]
-                if min_val > ACGT[2][i]:
-                    min_val = ACGT[2][i]
-            if ACGT[3][i] != 0:
-                summation += ACGT[3][i]
-                if min_val > ACGT[3][i]:
-                    min_val = ACGT[3][i]
-            f.write("%i %i\n" % (min_val, summation))
+    allele_cnt = np.sum(ACGT > 0, axis=1)
+    cnt = np.bincount(allele_cnt)[1:]
+    if len(cnt) < 4:
+        cnt = np.append(cnt, [0] * (4 - len(cnt)))
+    two_sites = ACGT[np.sum(ACGT > 0, axis=1) == 2, :]
+    bi_mac = np.quantile(two_sites, 0.75, axis=1, interpolation="lower")
+    bi_trc = np.sum(two_sites, axis=1)
+    [f.write("%i %i\n" % (bi_mac[i], bi_trc[i])) for i in range(cnt[1])]
     return cnt
 
 
-def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15,
+# writes biallelic MAC and TRC values to a file, option for bed file is given.
+# bam - location of bam file
+# outfile - output file location
+# bed - False if not bed file given, else the variable should be set to the
+# location of the bed file
+# map_quality - minimum mapping quality
+# base_quality - minimum base quality
+def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
                            base_quality=13):
     start = time.time()
-    cdef AlignmentFile bam
-    bam = pysam.AlignmentFile(bamfile, "rb")
+
+    b = bam.encode('UTF-8')
+    if not path.exists("%s.bai" % bam):
+        print("BAM index not detected. Building index...")
+        status = sam_index_build(b, 0)
+        if status == 0:
+            print("\tSuccess!")
+        else:
+            raise Exception("An error occurred while creating the index.")
+
+    cdef htsFile *bamfile = hts_open(b, b'r')
+    cdef sam_hdr_t *hdr = sam_hdr_read(bamfile)
+    cdef int num_ctg = hdr.n_targets
+
     outf = outfile if outfile[-3:] == ".gz" else outfile + ".gz"  # compressed
     info_file = (outfile[:-3] + ".info" if outfile[-3:] == ".gz"
                  else outfile + ".info")
@@ -122,45 +94,41 @@ def get_biallelic_coverage(bamfile, outfile, bed=False, map_quality=15,
         raise IOError("Output file %s exists! Will not overwrite." % outfile)
     out = gzip.open(outf, "wt")
     cnt = [0, 0, 0, 0]
-    error_list = []
+    l_nmr = 0
+    l_dnm = 0
     if bed:
         f = open(bed)
         for line in f:
             br = line.split()
-            contig = br[0]
+            contig = br[0].encode('UTF-8')
             start = -1
             end = -1
             if len(br) >= 3:
-                start = br[1]
-                end = br[2]
-            ACGT = get_count(bam, contig, start, end, map_quality, base_quality)
+                start = int(br[1])
+                end = int(br[2])
+            ACGT = get_count(b, bamfile, contig, hdr, start, end, map_quality, base_quality)
             cnt0 = get_MAC_TRC(ACGT, out)
             for i in range(4): cnt[i] += cnt0[i]
-            global g_div
-            global g_denom
-            error_list.append((g_div, g_denom))
+            l_nmr += numer
+            l_dnm += denom
         f.close()
     else:
-        for contig in bam.header.references:
-            ACGT = get_count(bam, contig, -1, -1, map_quality, base_quality)
+        for i in range(num_ctg):
+            contig = sam_hdr_tid2name(hdr, i)
+            ACGT = get_count(b, bamfile, contig, hdr, -1, -1, map_quality, base_quality)
             cnt0 = get_MAC_TRC(ACGT, out)
             for i in range(4): cnt[i] += cnt0[i]
-            global g_div
-            global g_denom
-            error_list.append((g_div, g_denom))
-    numer = 0
-    denom = 0
-    for etpl in error_list:
-        numer += etpl[0] * etpl[1]
-        denom += etpl[1]
+            l_nmr += numer
+            l_dnm += denom
     info = open(info_file, "w+")
-    info.write("p_err\t%8.10f\n" % (numer/denom))
+    info.write("p_err\t%8.10f\n" % (l_nmr/l_dnm))
     info.write("1-count\t%i\n" % cnt[0])
     info.write("2-count\t%i\n" % cnt[1])
     info.write("3-count\t%i\n" % cnt[2])
     info.write("4-count\t%i\n" % cnt[3])
     info.close()
     out.close()
+    hts_close(bamfile)
     print("Count data stored in %s" % outf)
     print("Secondary information stored in %s" % info_file)
     end = time.time()
