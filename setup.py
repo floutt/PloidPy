@@ -11,7 +11,8 @@ def is_library_installed(lib):
     if o.returncode != 0:
         raise Exception("""whereis command not found. Unable to determine if
                         library %s is present""" % lib)
-    return not (o.stdout[len(lib)+1:] == b"\n")
+    return not ((o.stdout[len(lib)+1:] == b"\n") or
+                (o.stdout[len(lib)+1:] == b""))
 
 
 def install_htslib():
