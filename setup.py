@@ -37,6 +37,6 @@ setuptools.setup(
     ],
     scripts=['scripts/PloidPy'],
     python_requires='>=3.6',
-    headers=["parse_bam.h"],
+    headers=["PloidPy/parse_bam.h"],
     ext_modules=cythonize(extensions)
 )
