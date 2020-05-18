@@ -28,7 +28,8 @@ void cmap(char *bam, samFile *bamfile, char *chrom, int start, int end,
 		if (read->core.flag & (BAM_FUNMAP | BAM_FDUP | BAM_FSECONDARY | BAM_FQCFAIL)) { continue; }
 			
 		char *qseq = (char *)malloc(len);
-		for(int i=0; i< len ; i++){
+		int i
+		for(i=0; i < len ; i++){
 			qseq[i] = seq_nt16_str[bam_seqi(q,i)];
 			if ( (pos + i) > end || (pos + i) < start) { continue; }
 			if ( min_bseq > q[i] ) { continue; }
