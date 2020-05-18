@@ -56,7 +56,7 @@ if __name__ == '__main__':
     denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required=True, help=count_desc)
     denoise.add_argument("--out", required=True, help="filtered count file")
-    denoise.add_argument("--pthresh", required=True, default=1.0, type=float,
+    denoise.add_argument("--pthresh", default=1.0, type=float,
                          help="posterior probability threshold")
 
     jdist = subparsers.add_parser("jdist")
