@@ -60,7 +60,7 @@ extensions = [
 
 setuptools.setup(
     name="PloidPy",
-    version="1.1.0",
+    version="1.1.1",
     author="Oluwatosin Olayinka",
     author_email="oaolayin@live.unc.edu",
     description="Discrete mixture model based ploidy inference tool",
