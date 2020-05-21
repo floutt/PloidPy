@@ -3,6 +3,7 @@ cimport numpy as np
 import scipy.stats as stats
 import time
 import gzip
+from math import ceil
 import os.path as path
 from process_bam cimport *
 
@@ -12,6 +13,9 @@ from process_bam cimport *
 # order to prevent any complications arising from NaN values (i.e. log(0) is
 # replaced with log(EPS)
 EPS = np.finfo(np.float64).tiny
+# MAXIMUM SIZE OF INDIVIDUAL NUMPY ARRAY
+MAX_NP = 200000000
+
 
 cdef double numer = 0
 cdef long denom = 0
@@ -29,18 +33,10 @@ cdef long denom = 0
 cdef np.ndarray get_count(char *b, htsFile *bamfile, char *c,
                           sam_hdr_t *bamHdr, int start, int end,
                           int mapq_thresh, int base_qual):
-    if not ((start == end == -1) or (isinstance(start, int) and
-                                       isinstance(end, int))):
-        raise ValueError("""Invalid configuration of contig, start, and end
-                         parameters""")
     cdef int ref_len = get_ref_length(bamHdr, c)
     np_arr = np.zeros((ref_len, 4), dtype=np.dtype("i"))
     cdef int[:,:] cm = np_arr
 
-    if start == -1:
-        start = 0
-    if end == -1:
-        end = ref_len
     cmap(b, bamfile, c, start, end, mapq_thresh, base_qual, &numer, &denom,
          &cm[0,0], bamHdr)
     return np_arr
@@ -101,25 +97,51 @@ def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
         for line in f:
             br = line.split()
             contig = br[0].encode('UTF-8')
-            start = -1
-            end = -1
+            ref_len = get_ref_length(hdr, contig)
+            start = 0
+            end = ref_len
             if len(br) >= 3:
                 start = int(br[1])
                 end = int(br[2])
-            ACGT = get_count(b, bamfile, contig, hdr, start, end, map_quality, base_quality)
-            cnt0 = get_MAC_TRC(ACGT, out)
-            for i in range(4): cnt[i] += cnt0[i]
-            l_nmr += numer
-            l_dnm += denom
+            if (end - start) > MAX_NP:
+                for idx in range(ceil((end - start) / MAX_NP)):
+                    s0 = idx * MAX_NP
+                    e0 = min(end - start, (idx + 1) * MAX_NP)
+                    ACGT = get_count(b, bamfile, contig, hdr, s0, e0,
+                                     map_quality, base_quality)
+                    cnt0 = get_MAC_TRC(ACGT, out)
+                    for i in range(4): cnt[i] += cnt0[i]
+                    l_nmr += numer
+                    l_dnm += denom
+            else:
+                ACGT = get_count(b, bamfile, contig, hdr, start, end,
+                                 map_quality, base_quality)
+                cnt0 = get_MAC_TRC(ACGT, out)
+                for i in range(4): cnt[i] += cnt0[i]
+                l_nmr += numer
+                l_dnm += denom
         f.close()
     else:
         for i in range(num_ctg):
             contig = sam_hdr_tid2name(hdr, i)
-            ACGT = get_count(b, bamfile, contig, hdr, -1, -1, map_quality, base_quality)
-            cnt0 = get_MAC_TRC(ACGT, out)
-            for i in range(4): cnt[i] += cnt0[i]
-            l_nmr += numer
-            l_dnm += denom
+            ref_len = get_ref_length(hdr, contig)
+            if ref_len > MAX_NP:
+                for idx in range(ceil(ref_len / MAX_NP)):
+                    s0 = idx * MAX_NP
+                    e0 = min(ref_len, (idx + 1) * MAX_NP)
+                    ACGT = get_count(b, bamfile, contig, hdr, s0, e0,
+                                     map_quality, base_quality)
+                    cnt0 = get_MAC_TRC(ACGT, out)
+                    for i in range(4): cnt[i] += cnt0[i]
+                    l_nmr += numer
+                    l_dnm += denom
+            else:
+                ACGT = get_count(b, bamfile, contig, hdr, 0, ref_len,
+                                 map_quality, base_quality)
+                cnt0 = get_MAC_TRC(ACGT, out)
+                for i in range(4): cnt[i] += cnt0[i]
+                l_nmr += numer
+                l_dnm += denom
     info = open(info_file, "w+")
     info.write("p_err\t%8.10f\n" % (l_nmr/l_dnm))
     info.write("1-count\t%i\n" % cnt[0])
