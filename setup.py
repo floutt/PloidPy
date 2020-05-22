@@ -1,5 +1,6 @@
 import setuptools
 import subprocess
+import glob
 import os
 from Cython.Build import cythonize
 from distutils.extension import Extension
@@ -15,8 +16,7 @@ def is_library_installed(lib):
                 (o.stdout[len(lib)+1:] == b""))
 
 
-def install_htslib():
-    print("Compiling C htslib library")
+def run_configure():
     old_dir = os.getcwd()
     os.chdir("htslib")  # change into htslib directory
 
@@ -29,8 +29,9 @@ def install_htslib():
     run_cmd_raise_if_error("autoconf")
     run_cmd_raise_if_error("./configure")
     run_cmd_raise_if_error("make")
+    with open("version.h", "w+") as f:
+        f.write('#define HTS_VERSION_TEXT "1.10.2-69-g382867a"')
     os.chdir(old_dir)
-    print("\tsuccess!")
 
 
 source_files = ['PloidPy/process_bam.pyx', 'PloidPy/parse_bam.c']
@@ -45,17 +46,25 @@ if is_library_installed("libhts"):
     libraries.append("hts")
 else:
     print("htslib library not found in system.")
-    install_htslib()
     include_dirs.append("htslib")
-    libraries.append("htslib/hts")
-
+    run_configure()
+    libraries += ['z', 'bz2', 'lzma', 'curl', 'crypt']
+    c_files = glob.glob('htslib/*.c') + glob.glob('htslib/cram/*.c')
+    elim = ['irods', 'plugin']
+    source_files += [x for x in c_files if not any(e in x for e in elim)]
+    source_files = list(filter(lambda x: not x.endswith(
+        ('htsfile.c', 'tabix.c', 'bgzip.c')), source_files))
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+cmpl_args = ["-Wno-sign-compare", "-Wno-unused-function",
+             "-Wno-strict-prototypes", "-Wno-unused-result",
+             "-Wno-discarded-qualifiers", "-std=c99"]
+
 extensions = [
     Extension('PloidPy.process_bam', source_files, libraries=libraries,
-              include_dirs=include_dirs)
+              include_dirs=include_dirs, extra_compile_args=cmpl_args)
 ]
 
 setuptools.setup(

@@ -52,6 +52,8 @@ if __name__ == '__main__':
     process_bam.add_argument("--bed", default=False, help=bed_desc)
     process_bam.add_argument("--quality", default=15, type=int, help=qty_desc)
     process_bam.add_argument("--base_qual", default=15, type=int, help=b_desc)
+    process_bam.add_argument("--max_np", type=int, default=200000000,
+                             help="maximum NumPy array size")
 
     denoise = subparsers.add_parser("filter")
     denoise.add_argument("--count_file", required=True, help=count_desc)
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         if args.bed:
             print("\tprocessing subset found in %s" % args.bed)
         pb.get_biallelic_coverage(args.bam, args.out, args.bed, args.quality,
-                                  args.base_qual)
+                                  args.base_qual, args.max_np)
         print("Success!")
     elif args.subparser == 'filter':
         print("Filtering count file %s..." % args.count_file)

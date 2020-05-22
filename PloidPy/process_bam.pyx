@@ -13,12 +13,10 @@ from process_bam cimport *
 # order to prevent any complications arising from NaN values (i.e. log(0) is
 # replaced with log(EPS)
 EPS = np.finfo(np.float64).tiny
-# MAXIMUM SIZE OF INDIVIDUAL NUMPY ARRAY
-MAX_NP = 200000000
 
 
-cdef double numer = 0
-cdef long denom = 0
+cdef long double numer = 0
+cdef unsigned long long denom = 0
 
 # calculates the base-specific coverage of a specific region and stores data in
 # a NumPy array
@@ -66,7 +64,7 @@ def get_MAC_TRC(ACGT, f):
 # map_quality - minimum mapping quality
 # base_quality - minimum base quality
 def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
-                           base_quality=13):
+                           base_quality=13, MAX_NP=200000000):
     start = time.time()
 
     b = bam.encode('UTF-8')

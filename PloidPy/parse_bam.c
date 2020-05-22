@@ -8,7 +8,7 @@
 #define ROWSTRIDE 4
 
 void cmap(char *bam, samFile *bamfile, char *chrom, int start, int end,
-		  int min_mapq, int min_bseq, double *numer, long *denom,
+		  int min_mapq, int min_bseq, long double *numer, unsigned long long *denom,
 		  int *count_mat, sam_hdr_t *hdr) {
 	int tid = bam_name2id(hdr, chrom);
 	bam1_t *read = bam_init1();
@@ -16,7 +16,7 @@ void cmap(char *bam, samFile *bamfile, char *chrom, int start, int end,
 	hts_itr_t *itr = sam_itr_queryi(idx, tid, start, end);
 
 	double n = 0;
-	int d = 0;	
+	unsigned long long d = 0;	
 	while(sam_itr_next(bamfile, itr, read) > 0) {
 		
 		int32_t pos = read->core.pos;

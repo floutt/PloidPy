@@ -1,7 +1,7 @@
 cdef extern from "parse_bam.h":
     void cmap(char *bam, htsFile *bamfile, char *chrom, int start, int end,
-              int min_mapq, int min_bseq, double *numer,
-              long *denom, int *count_mat, sam_hdr_t *hdr)
+              int min_mapq, int min_bseq, long double *numer,
+              unsigned long long *denom, int *count_mat, sam_hdr_t *hdr)
     int get_ref_length(sam_hdr_t *hdr, char *chrom)
 
 cdef extern from "htslib/hts.h":
