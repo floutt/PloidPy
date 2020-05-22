@@ -58,7 +58,7 @@ with open("README.md", "r") as fh:
 
 cmpl_args = ["-Wno-sign-compare", "-Wno-unused-function",
              "-Wno-strict-prototypes", "-Wno-unused-result",
-             "-Wno-discarded-qualifiers", "-std=c99"]
+             "-Wno-discarded-qualifiers"]
 
 extensions = [
     Extension('PloidPy.process_bam', source_files, libraries=libraries,
