@@ -29,8 +29,6 @@ def run_configure():
     run_cmd_raise_if_error("autoconf")
     run_cmd_raise_if_error("./configure")
     run_cmd_raise_if_error("make")
-    with open("version.h", "w+") as f:
-        f.write('#define HTS_VERSION_TEXT "1.10.2-69-g382867a"')
     os.chdir(old_dir)
 
 
