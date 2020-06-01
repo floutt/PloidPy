@@ -9,10 +9,9 @@
 
 void cmap(char *bam, samFile *bamfile, char *chrom, int start, int end,
 		  int min_mapq, int min_bseq, long double *numer, unsigned long long *denom,
-		  int *count_mat, sam_hdr_t *hdr) {
+		  int *count_mat, sam_hdr_t *hdr, hts_idx_t *idx) {
 	int tid = bam_name2id(hdr, chrom);
 	bam1_t *read = bam_init1();
-	hts_idx_t *idx = sam_index_load(bamfile, bam);
 	hts_itr_t *itr = sam_itr_queryi(idx, tid, start, end);
 
 	double n = 0;

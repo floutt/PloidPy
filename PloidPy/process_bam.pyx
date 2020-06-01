@@ -30,13 +30,13 @@ cdef unsigned long long denom = 0
 # base_qual - minimum base quality (Phred scale)
 cdef np.ndarray get_count(char *b, htsFile *bamfile, char *c,
                           sam_hdr_t *bamHdr, int start, int end,
-                          int mapq_thresh, int base_qual):
+                          int mapq_thresh, int base_qual, hts_idx_t *bam_idx):
     cdef int ref_len = get_ref_length(bamHdr, c)
     np_arr = np.zeros((ref_len, 4), dtype=np.dtype("i"))
     cdef int[:,:] cm = np_arr
 
     cmap(b, bamfile, c, start, end, mapq_thresh, base_qual, &numer, &denom,
-         &cm[0,0], bamHdr)
+         &cm[0,0], bamHdr, bam_idx)
     return np_arr
 
 
@@ -78,6 +78,7 @@ def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
 
     cdef htsFile *bamfile = hts_open(b, b'r')
     cdef sam_hdr_t *hdr = sam_hdr_read(bamfile)
+    cdef hts_idx_t *bam_idx = sam_index_load(bamfile, b);
     cdef int num_ctg = hdr.n_targets
 
     outf = outfile if outfile[-3:] == ".gz" else outfile + ".gz"  # compressed
@@ -106,14 +107,14 @@ def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
                     s0 = idx * MAX_NP
                     e0 = min(end - start, (idx + 1) * MAX_NP)
                     ACGT = get_count(b, bamfile, contig, hdr, s0, e0,
-                                     map_quality, base_quality)
+                                     map_quality, base_quality, bam_idx)
                     cnt0 = get_MAC_TRC(ACGT, out)
                     for i in range(4): cnt[i] += cnt0[i]
                     l_nmr += numer
                     l_dnm += denom
             else:
                 ACGT = get_count(b, bamfile, contig, hdr, start, end,
-                                 map_quality, base_quality)
+                                 map_quality, base_quality, bam_idx)
                 cnt0 = get_MAC_TRC(ACGT, out)
                 for i in range(4): cnt[i] += cnt0[i]
                 l_nmr += numer
@@ -128,18 +129,19 @@ def get_biallelic_coverage(bam, outfile, bed=False, map_quality=15,
                     s0 = idx * MAX_NP
                     e0 = min(ref_len, (idx + 1) * MAX_NP)
                     ACGT = get_count(b, bamfile, contig, hdr, s0, e0,
-                                     map_quality, base_quality)
+                                     map_quality, base_quality, bam_idx)
                     cnt0 = get_MAC_TRC(ACGT, out)
                     for i in range(4): cnt[i] += cnt0[i]
                     l_nmr += numer
                     l_dnm += denom
             else:
                 ACGT = get_count(b, bamfile, contig, hdr, 0, ref_len,
-                                 map_quality, base_quality)
+                                 map_quality, base_quality, bam_idx)
                 cnt0 = get_MAC_TRC(ACGT, out)
                 for i in range(4): cnt[i] += cnt0[i]
                 l_nmr += numer
                 l_dnm += denom
+    hts_idx_destroy(bam_idx)
     info = open(info_file, "w+")
     info.write("p_err\t%8.10f\n" % (l_nmr/l_dnm))
     info.write("1-count\t%i\n" % cnt[0])

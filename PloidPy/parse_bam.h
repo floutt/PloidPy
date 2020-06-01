@@ -8,6 +8,6 @@
 
 void cmap(char *bam, samFile *fp_in, char *chrom, int start, int end,
 				int min_mapq, int min_bseq, long double *numer,
-				unsigned long long *denom, int *count_mat, sam_hdr_t *bamHdr);
+				unsigned long long *denom, int *count_mat, sam_hdr_t *hdr, hts_idx_t *idx);
 
 int get_ref_length(sam_hdr_t *bamHdr, char *chrom);
